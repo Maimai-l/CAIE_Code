@@ -1,11 +1,33 @@
 from .history import HOME_PATH
 from .animation import new_animation
 import os
-import git
-import requests
 import json
 from time import time
 from datetime import datetime
+
+# git/requests are needed only by the explicit update command (SPEC 8.14);
+# a normal run must work without them.
+try:
+    import git
+except ImportError:
+    git = None
+try:
+    import requests
+except ImportError:
+    requests = None
+
+
+def _require_update_deps():
+    if git is None or requests is None:
+        print('updating needs the optional packages GitPython and requests:')
+        print('    pip install GitPython requests')
+        return False
+    if not os.path.exists(os.path.join(HOME_PATH, '.git')):
+        print('this installation is not a git checkout;')
+        print('upgrade it with your package manager, e.g.:')
+        print('    pip install --upgrade cpc-interpreter')
+        return False
+    return True
 
 VERSION = ''
 
@@ -84,12 +106,13 @@ def _update(remote, repo):
 def get_current_branch():
     if os.environ.get('CODESPACES'):
         return 'online'
+    if git is None or not os.path.exists(os.path.join(HOME_PATH, '.git')):
+        return 'local'
     repo = git.Repo(HOME_PATH)
-    current_branch = repo.git.rev_parse("--abbrev-ref", "HEAD")
-    return current_branch
+    return repo.git.rev_parse("--abbrev-ref", "HEAD")
 
 def get_commit_hash_msg():
-    if os.environ.get('CODESPACES'):
+    if os.environ.get('CODESPACES') or git is None or not os.path.exists(os.path.join(HOME_PATH, '.git')):
         return '000000', 'Online IDE', '000000', 'Online IDE'
     else:
         repo = git.Repo(HOME_PATH)
@@ -137,27 +160,29 @@ def show_notification(_branch):
         print("🙁No developer notification available.")
 
 def integrity_protection():
-    if not os.environ.get('CODESPACES'):
-        # init_git()
-
-        repo = git.Repo(HOME_PATH)
-        current_branch = get_current_branch()
-        local_commit = repo.head.commit
-        remote_branch = repo.remote().refs[current_branch]
-        remote_commit = remote_branch.commit
-        diff = local_commit.diff(remote_commit)
-
-        if diff or repo.is_dirty():
-            repo.git.reset('--hard', remote_commit)
-            print("❗INTEGRITY WARNING❗")
-            print("Changes have been discarded")
-            print("---------------------------------")
+    """Offer - never force - to discard local modifications of the
+    installation. Runs only from the explicit update command."""
+    if os.environ.get('CODESPACES') or git is None:
+        return
+    repo = git.Repo(HOME_PATH)
+    if not repo.is_dirty(untracked_files=False):
+        return
+    print('Local modifications detected in the installation directory.')
+    answer = input('Discard them and restore the released files? [y/N] ').strip().lower()
+    if answer == 'y':
+        repo.git.reset('--hard')
+        print('Local modifications discarded.')
+    else:
+        print('Keeping local modifications.')
 
 def update():
     from .global_var import config
     if os.getenv('CODESPACES'):
         print('You are using a GitHub Codespace, where update function is not allowed.')
         return
+    if not _require_update_deps():
+        return
+    integrity_protection()
     git_remote = config.get_config('remote')
     # 检查是否能连接到 GitHub
     if git_remote == config.get_default_config('remote') and not check_github_connectivity():

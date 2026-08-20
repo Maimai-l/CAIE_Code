@@ -1,33 +1,37 @@
+import os
 from os.path import join, exists, dirname
 
-# 尝试导入 readline，无法导入也不会导致核心功能受损
+# readline is optional; without it only line editing/history is lost.
 try:
     import readline
-except:
+except Exception:
     readline = None
 
-def parent_path(p):
-    return dirname(p)
+# Installation directory (read-only at runtime, SPEC 8.13).
+HOME_PATH = dirname(dirname(__file__))
 
-HOME_PATH = parent_path(parent_path(__file__))
+# User state directory (SPEC 8.9): config, history, packages.
+STATE_DIR = os.environ.get('CPC_HOME') or join(os.path.expanduser('~'), '.cpc')
+os.makedirs(STATE_DIR, exist_ok=True)
+
 
 class Cmd:
-    def __init__(self, home_path=HOME_PATH, save_path='.cpc_history', history_size=1000):
-        self.home_path = home_path
-        self.save_path = save_path
+    def __init__(self, state_dir=STATE_DIR, save_name='history', history_size=1000):
         self.history_size = history_size
-        self.path = join(self.home_path, self.save_path)
+        self.path = join(state_dir, save_name)
 
     def preloop(self):
-        if readline:
-            if exists(self.path):
-                try:
-                    readline.read_history_file(self.path)
-                except:
-                    # 报错并不会影响历史记录的功能
-                    pass
+        if readline and exists(self.path):
+            try:
+                readline.read_history_file(self.path)
+            except Exception:
+                # A broken history file must not break the session.
+                pass
 
     def postloop(self):
         if readline:
-            readline.set_history_length(self.history_size)
-            readline.write_history_file(self.path)
+            try:
+                readline.set_history_length(self.history_size)
+                readline.write_history_file(self.path)
+            except Exception:
+                pass

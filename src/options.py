@@ -108,9 +108,10 @@ def migrate_files(directory):
         # Filter out directories starting with a dot
         dirs[:] = [d for d in dirs if not d.startswith('.')]
         for file in files:
-            if file.endswith('.p'):
+            base, ext = os.path.splitext(file)
+            if ext == '.p':
                 old_file_path = os.path.join(root, file)
-                new_file_path = os.path.join(root, file.replace('.p', '.cpc'))
+                new_file_path = os.path.join(root, base + '.cpc')
                 os.rename(old_file_path, new_file_path)
 
     print("Migration completed.")
@@ -146,8 +147,11 @@ def doc():
         os.system(f'open "{file_path}"')
 
 def init_requirements():
-    from .requirements import test_requirements
-    test_requirements()
+    # Explicitly requested by the user, so installing here is fine.
+    import subprocess, sys as _sys
+    from .history import HOME_PATH
+    req = os.path.join(HOME_PATH, 'requirements.txt')
+    subprocess.call([_sys.executable, '-m', 'pip', 'install', '-r', req])
 
 # 输入参数: (参数简写, 参数全称, 运行函数, 描述, 是否需要退出, 是否需要参数，参数数量，函数所需参数)
 class Opt:

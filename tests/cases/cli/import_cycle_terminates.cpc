@@ -1,0 +1,2 @@
+IMPORT "cyc_a.cpc"
+OUTPUT "done"

@@ -2,11 +2,13 @@
 
 use std::{env, process::Command, fs, path::PathBuf, str::FromStr};
 
+// python3 before python: on old systems a bare `python` may be Python 2,
+// which cannot run the interpreter.
 pub const PYTHON : &[&str] = &[
     "pypy3",
     "pypy",
-    "python",
     "python3",
+    "python",
 ];
 
 pub const MAC_PYTHON_HOME : &str = "/Library/Frameworks/Python.framework/Versions";

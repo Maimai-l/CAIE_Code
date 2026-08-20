@@ -1,0 +1,3 @@
+IMPORT "mod.cpc"
+IMPORT "mod.cpc"
+OUTPUT "done"

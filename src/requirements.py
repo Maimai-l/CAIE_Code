@@ -1,42 +1,26 @@
 import importlib
-import os
 import sys
-import subprocess
 
+# (pip package name, import name)
 requirements = [
     ('ply', 'ply'),
     ('chardet', 'chardet'),
-    ('GitPython', 'git'),
     ('colorama', 'colorama'),
-    ('requests', 'requests'),
-    ('pickle', 'pickle'),
 ]
 
 
-aliyun = 'https://mirrors.aliyun.com/pypi/simple/'
-
-def check_pip() -> bool:
-    process = subprocess.Popen([sys.executable, "-m", "pip"], stdout=subprocess.DEVNULL)
-    process.wait()
-    return process.returncode == 0
-
-def ensure_pip():
-    if check_pip():
-        return
-    else:
-        print("Missing pip. Installing Now...")
-        pip_cmd = f'"{sys.executable}" -m ensurepip'
-        os.popen(pip_cmd).read()
-
 def test_requirements():
-    # ensure_pip()
-
+    """SPEC 8.8: never install packages behind the user's back; name the
+    missing ones and the command that installs them, then exit."""
+    missing = []
     for package_name, import_name in requirements:
         try:
             importlib.import_module(import_name)
-        except:
-            print(f'Missing Important Dependence `{package_name}`\nTrying to Install for You...')
-            if os.environ.get('CODESPACES'):
-                os.system(f'"{sys.executable}" -m pip install {package_name}')
-            else:
-                os.system(f'"{sys.executable}" -m pip install {package_name} -i {aliyun}')
+        except ImportError:
+            missing.append(package_name)
+    if missing:
+        sys.stderr.write(
+            'missing required package(s): ' + ', '.join(missing) + '\n'
+            'install them with:\n'
+            f'    {sys.executable} -m pip install ' + ' '.join(missing) + '\n')
+        sys.exit(2)

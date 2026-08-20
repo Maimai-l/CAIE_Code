@@ -2,44 +2,27 @@
 from src.requirements import test_requirements
 test_requirements()
 
-from ply import lex
-from chardet import detect
 import signal
 # colorama makes \033 escape codes work on legacy Windows terminals.
 import colorama
 colorama.init()
 
 import src.global_var as global_var
-
-from src.lex import *
-from src.parse import *
 import src.options as options
+import src.runner as runner
+from src.global_var import config
 from src.history import HOME_PATH
 from src.quit import quit
 from src.line_commands import run_command
-from src.update import update
-from src.update import update_expired
-from src.update import integrity_protection
-from src.error import (
-    CpcError,
-    format_runtime_error,
-    format_syntax_issue,
-    print_err,
-    print_internal_error,
-)
+from src.error import print_err
 
-import sys
 import os
-from time import time
+import sys
 
-# Result states of running one file (drives the process exit code, SPEC 8.5).
-RUN_OK = 0
-RUN_ERROR = 1
-RUN_INTERNAL = 70
+SCRIPTS_PATH = os.path.join(HOME_PATH, 'scripts')
 
 preline = '>'
 multi_preline = '.'
-home_path = HOME_PATH
 
 
 def signal_handler(_signal, _frame):
@@ -53,23 +36,6 @@ def wrong_argument(msg):
     print_err(f'Unknown argument: {msg}')
     print_err('Use `cpc -h` to get detailed information about how to use')
     quit(2)
-
-
-def report_syntax_errors(path, source=None):
-    if options.get_value('show_error'):
-        for issue in global_var.get_syntax_errors()[:20]:
-            print_err(format_syntax_issue(path, issue, source))
-    global_var.clear_syntax_errors()
-
-
-def preload_scripts():
-    scripts_path = os.path.join(home_path, 'scripts')
-    for p, _dir_list, file_list in os.walk(scripts_path):
-        for i in file_list:
-            path = os.path.join(p, i)
-            _, n = os.path.splitext(path)
-            if n == '.cpc':
-                with_file(path, True)
 
 
 def _read_line(prompt_text):
@@ -86,7 +52,7 @@ def multi_input():
     while True:
         global_var.clear_syntax_errors()
         try:
-            parser.parse(text, tracking=True)
+            runner.parser.parse(text, lexer=runner.lexer, tracking=True)
         except Exception:
             pass
         issues = global_var.get_syntax_errors()
@@ -99,55 +65,6 @@ def multi_input():
         return text
 
 
-def run_AST(ast, preload=False):
-    if options.get_value('show_tree') and not preload:
-        print(ast.get_tree())
-
-    if options.get_value('show_time') and not preload:
-        t = time()
-
-    ast.exe()
-
-    if options.get_value('show_time') and not preload:
-        t = time() - t
-        print(f'\033[4mDuration: {t}s\033[0m')
-
-
-def execute_text(text, path, preload=False):
-    """Parse and run one chunk of source. Returns a RUN_* state."""
-    global_var.clear_syntax_errors()
-    try:
-        ast = parser.parse(text, debug=options.get_value('show_parse'), tracking=True)
-    except Exception as e:
-        print_internal_error(e)
-        return RUN_INTERNAL
-
-    if global_var.get_syntax_errors():
-        report_syntax_errors(path, text)
-        return RUN_ERROR
-    if ast is None:
-        return RUN_OK
-
-    try:
-        run_AST(ast, preload=preload)
-    except CpcError as e:
-        if options.get_value('show_error'):
-            print_err(format_runtime_error(path, e))
-        return RUN_ERROR
-    except (SystemExit, KeyboardInterrupt):
-        raise
-    except RecursionError:
-        # Deep expression nesting can exhaust Python's stack before the
-        # pseudocode call limit is reached; still report it cleanly.
-        if options.get_value('show_error'):
-            print_err(format_runtime_error(path, CpcError('the program nests too deeply for the interpreter')))
-        return RUN_ERROR
-    except Exception as e:
-        print_internal_error(e)
-        return RUN_INTERNAL
-    return RUN_OK
-
-
 # Interactive session (SPEC 8.6).
 def with_line():
     global_var.set_running_mod('line')
@@ -156,35 +73,22 @@ def with_line():
         options.standard_output()
     while 1:
         text = multi_input()
-        lexer.lineno = 1
+        runner.lexer.lineno = 1
         if run_command(text):
             continue
         if not text:
             continue
-        execute_text(text, '')
-
-
-# Run a whole file. Returns a RUN_* state.
-def with_file(path, preload=False):
-    global_var.set_running_mod('file')
-    global_var.set_running_path(path)
-    lexer.lineno = 1
-    with open(path, 'rb') as f:
-        encode = detect(f.read())['encoding']
-    with open(path, 'r', encoding=encode) as f:
-        text = f.read()
-    if not text.strip():
-        return RUN_OK
-
-    return execute_text(text, path, preload=preload)
+        global_var.set_running_mod('line')
+        runner.execute_text(text, '')
 
 
 def main(input_=None, output_=None, addition_file_name=None):
     if input_: global_var.set_std_in(input_)
     if output_: global_var.set_std_out(output_)
 
+    # SPEC 8.10: files run in the order given, duplicates included.
     argv = sys.argv
-    file_paths = set()
+    file_paths = []
     i = 1
     while i < len(argv):
         arg = argv[i]
@@ -197,42 +101,38 @@ def main(input_=None, output_=None, addition_file_name=None):
             if arg[0] == '-':
                 wrong_argument(f'Unknown option `{arg}`')
             else:
-                file_paths.add(arg)
+                file_paths.append(arg)
         i += 1
 
     if addition_file_name:
-        file_paths.add(addition_file_name)
+        file_paths.append(addition_file_name)
 
-    if not config.get_config('dev') and config.get_config('integrity-protection'):
-        integrity_protection()
-
-    if config.get_config('dev.simulate-update') or (config.get_config('auto-update') and not config.get_config('dev') and update_expired()):
-        update()
-        config.update_config('last-auto-update', str(time()))
-
-    preload_scripts()
+    # SPEC 8.8: a plain run performs no update check, no network access and
+    # no interactive prompt. Updating is the explicit `cpc -u` command.
 
     if not file_paths:
+        runner.preload_scripts(SCRIPTS_PATH)
         with_line()
-        return RUN_OK
+        return runner.RUN_OK
 
-    worst = RUN_OK
-    for file_path in file_paths:
-        lexer.lineno = 1
-        if os.path.exists(file_path):
-            if os.path.isfile(file_path):
-                worst = max(worst, with_file(file_path))
-            else:
-                wrong_argument(f'`{file_path}` is not a file')
-        else:
+    worst = runner.RUN_OK
+    for index, file_path in enumerate(file_paths):
+        if not os.path.exists(file_path):
             wrong_argument(f'File `{file_path}` does not exist')
+        if not os.path.isfile(file_path):
+            wrong_argument(f'`{file_path}` is not a file')
+        # SPEC 8.10: each file starts from a fresh interpreter state.
+        if index > 0:
+            runner.reset_interpreter(SCRIPTS_PATH)
+        else:
+            runner.preload_scripts(SCRIPTS_PATH)
+        # The top-level file counts as imported (SPEC 8.11).
+        runner.imported_paths.add(os.path.abspath(file_path))
+        worst = max(worst, runner.run_file(file_path))
     return worst
 
 
 global_var.__init__()
-
-lexer = lex.lex()
-parser = build_parser()
 
 if __name__ == '__main__':
     try:

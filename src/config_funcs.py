@@ -11,6 +11,8 @@ class DictConfig:
 		self.d = d
 
 	def update(self, obj, val):
+		# Enum-like configs are case-insensitive; free-form values keep case.
+		val = str(val).lower()
 		if val in self.d:
 			obj.val = self.d[val]
 		else:
@@ -21,6 +23,7 @@ class SetConfig:
 		self.available_set = available_set
 
 	def update(self, obj, val):
+		val = str(val).lower()
 		if val in self.available_set:
 			obj.val = val
 		else:

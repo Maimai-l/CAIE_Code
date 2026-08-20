@@ -1,0 +1,3 @@
+OUTPUT "in A"
+IMPORT "cyc_b.cpc"
+OUTPUT "back in A"
