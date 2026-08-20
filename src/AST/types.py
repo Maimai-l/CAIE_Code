@@ -82,10 +82,12 @@ class Composite_type(AST_Node):
                 self.type = that.id
                 self.body = that.body
                 self.is_struct = True
-                self.space = Space(self.type, {}, {})
+                self.space = Space(self.type, {}, {}, kind='object')
                 stack.push_subspace(self.space)
-                self.body.exe()
-                stack.pop_subspace()
+                try:
+                    self.body.exe()
+                finally:
+                    stack.pop_subspace()
 
             def __getitem__(self, i):
                 if i == 1:
@@ -144,17 +146,24 @@ class Class(AST_Node):
                     else:
                         add_stack_error_message(f'Cannot inherit from an unknown class: `{that.inherit_id}`')
                         return
-                    self.space = Space(self.type, {'SELF': (self, False), 'SUPER': (inherit_obj, False)}, {})
+                    self.space = Space(self.type, {'SELF': (self, False), 'SUPER': (inherit_obj, False)}, {}, kind='object')
                 else:
-                    self.space = Space(self.type, {'SELF': (self, False)}, {})
+                    self.space = Space(self.type, {'SELF': (self, False)}, {}, kind='object')
                 stack.push_subspace(self.space)
-                self.body.exe()
-                stack.pop_subspace()
+                try:
+                    self.body.exe()
+                finally:
+                    stack.pop_subspace()
 
             def load_init(self, param):
+                # Constructor arguments are evaluated in the caller's scope
+                # before the object space is pushed (SPEC 5.1).
+                args = param.exe() if param else []
                 stack.push_subspace(self.space)
-                Call_function('NEW', param).exe()
-                stack.pop_subspace()
+                try:
+                    Call_function('NEW', param).exe(pre_params=args)
+                finally:
+                    stack.pop_subspace()
 
             def __getitem__(self, key):
                 if key == 1:
@@ -200,11 +209,12 @@ class Class_expression(AST_Node):
         return LEVEL_STR * level + self.type + ' ' + self.id + '\n' + self.param.get_tree(level+1)
 
     def exe(self):
+        if self.id not in stack.structs:
+            add_error_message(f'unknown class or type `{self.id}`', self)
         s = stack.structs[self.id](None)
-        try:
-            s.load_init(self.param)
-        except:
-            add_error_message(f'`{self.id}` is not a valid class', self)
+        if not hasattr(s, 'load_init'):
+            add_error_message(f'`{self.id}` is not a class', self)
+        s.load_init(self.param)
         return s
 
 class Composite_type_expression(AST_Node):
@@ -231,14 +241,25 @@ class Composite_type_expression(AST_Node):
             else:
                 add_error_message(f'Invalid value `{self.exp2.id}` for enum `{obj.type}`', self)
                 return
-        # 否则，按照正常自定义类型的操作运行
-        # 将此对象的空间放入主空间列表
+        # Member access runs exp2 inside the object's space. Arguments and
+        # indexes are evaluated FIRST, in the caller's scope, so that
+        # obj.m(localVar) still sees the caller's locals (SPEC 5.1).
+        from .function import Call_function
+        pre = None
+        if isinstance(self.exp2, Call_function) and self.exp2.parameters:
+            pre = self.exp2.parameters.exe()
+        elif isinstance(self.exp2, Array_get):
+            pre = self.exp2.indexes.exe()
         stack.push_subspace(obj.space)
-        # 获取变量的值
-        v = self.exp2.exe()
-        # 将空间放回子空间列表
-        stack.pop_subspace()
-        # 返回获得的值
+        try:
+            if isinstance(self.exp2, Call_function):
+                v = self.exp2.exe(pre_params=pre if pre is not None else [])
+            elif isinstance(self.exp2, Array_get):
+                v = self.exp2.exe(pre_indexes=pre)
+            else:
+                v = self.exp2.exe()
+        finally:
+            stack.pop_subspace()
         return v
 
 class Composite_type_statement(AST_Node):

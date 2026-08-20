@@ -1,14 +1,18 @@
 from .global_var import *
 from .data_types import *
 from .history import HOME_PATH
-from copy import copy
 
-# (空间名, {变量名: (类实例, 是否是常量)}, {函数名: 函数AST实例})
+
+# A Space holds names for one scope. kind is one of:
+#   'global' - the single global frame
+#   'frame'  - locals + parameters of one active subroutine call
+#   'object' - the member space of a record/class instance
 class Space:
-    def __init__(self, name: str, variables: dict, functions: dict):
+    def __init__(self, name: str, variables: dict, functions: dict, kind='frame'):
         self.name = name
         self.variables = variables
         self.functions = functions
+        self.kind = kind
 
     def __getitem__(self, index):
         if index == 0:
@@ -24,22 +28,17 @@ class Space:
         self.variables[id] = (value, is_const)
 
     def set_variable(self, id, value, type):
-        if self.variables[id][1] == False:
-            try:
-                self.variables[id][0].set_value(value)
-            except:
-                add_stack_error_message(f'Cannot assign `{type}` to `{self.variables[id][0][1]}`')
-        else:
-            add_stack_error_message(f'Cannot assign value to constant `{id}`')
+        if self.variables[id][1]:
+            add_stack_error_message(f'cannot assign a value to constant `{id}`')
+        self.variables[id][0].set_value(value)
 
     def force_set_variable(self, id, value, type):
-        if self.variables[id][1] == False:
-            if self.variables[id][0][1] == type:
-                self.variables[id] = (value, False)
-            else:
-                add_stack_error_message(f'Cannot assign `{type}` pointer to `{self.variables[id][0][1]}`')
+        if self.variables[id][1]:
+            add_stack_error_message(f'cannot assign a value to constant `{id}`')
+        if self.variables[id][0][1] == type:
+            self.variables[id] = (value, False)
         else:
-            add_stack_error_message(f'Cannot assign value to constant `{id}`')
+            add_stack_error_message(f'cannot assign `{type}` pointer to `{self.variables[id][0][1]}`')
 
     def set_function(self, id, func):
         self.functions[id] = func
@@ -47,22 +46,24 @@ class Space:
 
 class Stack:
     def __init__(self) -> None:
-        self.spaces = [Space('GLOBAL', {}, {})]  # [Space]
-        self.files = {}  # {文件名: 打开的文件实例, seek}
+        self.spaces = [Space('GLOBAL', {}, {}, kind='global')]
+        self.files = {}  # {path: (file object, eof position, seek position)}
         self.structs = {
-            'INTEGER' : INTEGER,
-            'REAL' : REAL,
-            'STRING' : STRING,
-            'CHAR' : CHAR,
-            'BOOLEAN' : BOOLEAN,
+            'INTEGER': INTEGER,
+            'REAL': REAL,
+            'STRING': STRING,
+            'CHAR': CHAR,
+            'BOOLEAN': BOOLEAN,
             'DATE': DATE,
-            'ARRAY' : ARRAY,
+            'ARRAY': ARRAY,
             'ANY': ANY,
-        }  # {结构名: 结构实例}
+        }
         self.return_variables = None
         self.return_request = False
-        # 内置常量
-        self.new_constant('__HOME__', STRING(HOME_PATH))
+        self.call_depth = 0  # pseudocode calls currently active (SPEC 5.5)
+        home = STRING(HOME_PATH, name='__HOME__')
+        home.is_const = True
+        self.spaces[0].new_variable('__HOME__', home, True)
 
     def global_space(self):
         return self.spaces[-1]
@@ -70,68 +71,112 @@ class Stack:
     def current_space(self):
         return self.spaces[0]
 
+    def visible_spaces(self):
+        """Lexical visibility (SPEC 5.1). Caller frames are never visible.
+
+        Two shapes occur at the top of the space list:
+        - plain member access pushes object spaces: they see themselves
+          (plus nested object spaces) and the global frame only;
+        - a subroutine call pushes one frame; a method call pushes it on
+          top of its object space: [frame, object, ...]. The frame sees
+          itself, those object spaces, and the global frame.
+        """
+        visible = []
+        i = 0
+        while i < len(self.spaces) and self.spaces[i].kind == 'object':
+            visible.append(self.spaces[i])
+            i += 1
+        if not visible and i < len(self.spaces) and self.spaces[i].kind == 'frame':
+            visible.append(self.spaces[i])
+            i += 1
+            while i < len(self.spaces) and self.spaces[i].kind == 'object':
+                visible.append(self.spaces[i])
+                i += 1
+        globe = self.global_space()
+        if globe not in visible:
+            visible.append(globe)
+        return visible
+
+    def _private_accessible(self, owner_space):
+        # A private member is reachable from methods of its object (a frame
+        # is on top of the owner's object space) and always at global scope.
+        if owner_space.kind == 'global':
+            return True
+        return self.spaces[0].kind == 'frame' and owner_space in self.spaces
+
     def get_variable(self, id):
-        for i in self.spaces:
-            if id in i.variables.keys():
-                v = i.variables[id][0]
-                if v.current_space is None: return v
-                else:
-                    # 判断是否是在外部访问
-                    # 从后向前遍历，如果这个变量中记录的space存在于我的上面的话，那就可以
-                    for i in range(len(self.spaces)-2, 0, -1):
-                        if self.spaces[i] == v.current_space:
-                            return v
-                    else:
-                        add_stack_error_message(f'private variable `{id}` is not accessible')
-        else:
-            add_stack_error_message(f'no variable or constant named `{id}`')
+        for space in self.visible_spaces():
+            if id in space.variables:
+                v = space.variables[id][0]
+                if v.current_space is None or self._private_accessible(v.current_space):
+                    return v
+                add_stack_error_message(f'private variable `{id}` is not accessible')
+        add_stack_error_message(f'no variable or constant named `{id}`')
 
     def new_variable(self, id, type, value=None):
-        if value:
+        if type not in self.structs:
+            add_stack_error_message(f'unknown type `{type}`')
+        self.declare_check(id)
+        if value is not None:
             self.spaces[0].new_variable(id, self.structs[type](name=id, value=value), False)
         else:
             self.spaces[0].new_variable(id, self.structs[type](name=id), False)
 
+    def declare_check(self, id):
+        # SPEC 4.4: re-declaring a name in the same scope is an error;
+        # the interactive session may re-declare freely.
+        if id in self.spaces[0].variables and get_running_mod() != 'line':
+            add_stack_error_message(f'`{id}` is already declared')
+
+    def ensure_loop_variable(self, id):
+        """FOR creates its counter on first use and reuses it afterwards."""
+        for space in self.visible_spaces():
+            if id in space.variables:
+                v = space.variables[id]
+                if v[1]:
+                    add_stack_error_message(f'cannot use constant `{id}` as a loop counter')
+                if v[0][1] != 'INTEGER':
+                    add_stack_error_message(f'loop counter `{id}` must be INTEGER, found `{v[0][1]}`')
+                return
+        self.spaces[0].new_variable(id, self.structs['INTEGER'](name=id), False)
+
     def new_constant(self, id, value):
-        # 复制值
-        if type(value) == tuple:
-            clone = self.structs[value[1]](value[0])
+        self.declare_check(id)
+        if isinstance(value, tuple):
+            clone = self.structs[value[1]](value[0]) if value[1] in self.structs else ANY(value[0])
         else:
+            from copy import copy
             clone = copy(value)
-        # 赋值
         clone.is_const = True
         self.spaces[0].new_variable(id, clone, True)
 
     def set_variable(self, id, value, type):
-        for i in range(len(self.spaces)):
-            if id in self.spaces[i].variables:
-                self.spaces[i].set_variable(id, value, type)
-                break
-        else:
-            add_stack_error_message(f'Variable `{id}` has not been declared yet')
+        for space in self.visible_spaces():
+            if id in space.variables:
+                space.set_variable(id, value, type)
+                return
+        add_stack_error_message(f'no variable or constant named `{id}`')
 
     def force_set_variable(self, id, value, type):
-        for i in range(len(self.spaces)):
-            if id in self.spaces[i].variables:
-                self.spaces[i].force_set_variable(id, value, type)
-                break
-        else:
-            add_stack_error_message(f'Variable `{id}` has not been declared yet')
+        for space in self.visible_spaces():
+            if id in space.variables:
+                space.force_set_variable(id, value, type)
+                return
+        add_stack_error_message(f'no variable or constant named `{id}`')
 
     def remove_variable(self, id):
-        for i in range(len(self.spaces)):
-            if id in self.spaces[i].variables:
-                del self.spaces[i].variables[id]
+        for space in self.visible_spaces():
+            if id in space.variables:
+                del space.variables[id]
                 return
-        else:
-            add_stack_error_message(f'Variable or constant `{id}` has not been declared yet')
+        add_stack_error_message(f'no variable or constant named `{id}`')
 
     def pop_space(self):
         self.spaces.pop(0)
         self.return_request = False
 
     def new_space(self, space_name, var_dict, func_dict):
-        self.spaces.insert(0, Space(space_name, var_dict, func_dict))
+        self.spaces.insert(0, Space(space_name, var_dict, func_dict, kind='frame'))
 
     def set_return_variables(self, variables):
         self.return_variables = variables
@@ -145,52 +190,43 @@ class Stack:
         self.current_space().set_function(function.id, function)
 
     def get_function(self, id):
-        for i in range(len(self.spaces)):
-            if id in self.spaces[i].functions.keys():
-                f = self.spaces[i].functions[id]
-                if f.current_space is None: return f
-                else:
-                    # 与获取变量同理
-                    for i in range(len(self.spaces)-2, 0, -1):
-                        if self.spaces[i] == f.current_space:
-                            return f
-                    else:
-                        add_stack_error_message(f'Private function `{id}` is not accessible')
-        else:
-            add_stack_error_message(f'No function with id: `{id}`')
+        for space in self.visible_spaces():
+            if id in space.functions:
+                f = space.functions[id]
+                if f.current_space is None or self._private_accessible(f.current_space):
+                    return f
+                add_stack_error_message(f'private function `{id}` is not accessible')
+        add_stack_error_message(f'no procedure or function named `{id}`')
 
     def add_file(self, path, file_obj, seek_addr=0):
         try:
             file_obj.seek(0, 2)
             eof = file_obj.tell()
-        except:
+        except Exception:
             eof = ''
         file_obj.seek(seek_addr)
         self.files[path] = (file_obj, eof, seek_addr)
-        
+
     def set_seek(self, path, seek_addr=0):
         if path in self.files:
             self.files[path] = (self.files[path][0], self.files[path][1], seek_addr)
         else:
-            add_stack_error_message(f'File `{path}` has not opened')
+            add_stack_error_message(f'file `{path}` is not open')
 
     def get_file(self, path):
         if path in self.files:
             return self.files[path][0]
-        else:
-            add_stack_error_message(f'File `{path}` has not opened')
-            
+        add_stack_error_message(f'file `{path}` is not open')
+
     def get_seek(self, path):
         if path in self.files:
             return self.files[path][2]
-        else:
-            add_stack_error_message(f'File `{path}` has not opened')
+        add_stack_error_message(f'file `{path}` is not open')
 
     def get_eof(self, path):
         if path in self.files:
             return self.files[path][1]
-        else:
-            add_stack_error_message(f'File `{path}` has not opened')
+        add_stack_error_message(f'file `{path}` is not open')
 
     def close_all_files(self):
         from .error import print_err
@@ -207,6 +243,3 @@ class Stack:
 
     def push_subspace(self, space):
         self.spaces.insert(0, space)
-
-    def delete(self):
-        del self

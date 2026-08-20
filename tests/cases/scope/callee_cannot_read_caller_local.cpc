@@ -1,0 +1,9 @@
+PROCEDURE Inner()
+    OUTPUT secret
+ENDPROCEDURE
+PROCEDURE Outer()
+    DECLARE secret : INTEGER
+    secret <- 42
+    CALL Inner()
+ENDPROCEDURE
+CALL Outer()

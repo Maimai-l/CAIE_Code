@@ -1,0 +1,7 @@
+DECLARE g : INTEGER
+g <- 1
+PROCEDURE Bump()
+    g <- g + 1
+ENDPROCEDURE
+CALL Bump()
+OUTPUT g

@@ -96,8 +96,8 @@ class For(AST_Node):
                 add_error_message(f'Expect `{self.id}` for next id, but found `{self.next_id}`', self)
                 return
 
-            # 创建 index 变量
-            stack.new_variable(self.id, 'INTEGER')
+            # The counter is created on first use and reused when declared.
+            stack.ensure_loop_variable(self.id)
 
             for i in range(left[0], right[0]+diff, step[0]):
                 # 给 index 赋值

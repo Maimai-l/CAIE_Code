@@ -1,7 +1,7 @@
 from .data import *
 from ..AST_Base import *
 from ..global_var import *
-import copy
+from ..error import CpcError
 
 class Function(AST_Node):
     def __init__(self, id, parameters, statements, returns=None, private=False, *args, **kwargs):
@@ -60,76 +60,85 @@ class Call_function(AST_Node):
         else:
             return LEVEL_STR * level + self.type + ' ' + str(self.id)
 
-    def exe(self):
-        new_dict = {}  # {变量名: (值, 类型, 是否是常量)}
+    def _bind_parameter(self, name, ptype, byref, elem_type, arg):
+        """Build the storage slot for one parameter (SPEC 5.2)."""
+        from .. import values
+        from ..data_types import clone_wrapper, ARRAY
+        if byref:
+            if arg is None or isinstance(arg, tuple):
+                add_error_message(
+                    f'BYREF parameter `{name}` needs a variable, array or field as argument', self)
+            if ptype not in ('ANY',) and arg[1] != ptype:
+                add_error_message(
+                    f'BYREF parameter `{name}` expects `{ptype}`, found `{arg[1]}`', self)
+            return arg
+        if ptype == 'ARRAY':
+            if arg is None or arg[1] != 'ARRAY':
+                found = 'nothing' if arg is None else f'`{arg[1]}`'
+                add_error_message(f'parameter `{name}` expects `ARRAY`, found {found}', self)
+            cp = clone_wrapper(arg) if not isinstance(arg, tuple) else ARRAY(arg[0])
+            if elem_type:
+                cp.to_target(elem_type)
+            return cp
+        value = values.check_assign(ptype, arg, self)
+        if ptype in ('INTEGER', 'REAL', 'STRING', 'CHAR', 'BOOLEAN', 'DATE', 'ANY'):
+            return stack.structs[ptype](value)
+        if ptype not in stack.structs:
+            add_error_message(f'unknown parameter type `{ptype}`', self)
+        # User-defined type: pass the instance (records copy in plan step 10c).
+        if isinstance(arg, tuple):
+            add_error_message(f'parameter `{name}` expects a `{ptype}` value', self)
+        return arg
+
+    def exe(self, pre_params=None):
+        from .. import values
         function_obj = stack.get_function(self.id)
-        if function_obj.parameters:
-            target_parameters = function_obj.parameters.exe()  # (id, 类型)
-            if self.parameters:
-                parameters = self.parameters.exe()  # (值, 类型)
-            else:
-                add_error_message(f'Function `{self.id}` expect {len(target_parameters)} parameters, but found 0', self)
-            if len(target_parameters) != len(parameters):
-                add_error_message(f'Function `{self.id}` expect {len(target_parameters)} parameters, but found {len(self.parameters)}', self)
-
-            # 核对并传参
-            for i in range(len(target_parameters)):
-                try:
-                    # 如果是要 by ref，那就直接传递类型实例
-                    if target_parameters[i][2]:
-                        if target_parameters[i][1] == parameters[i][1]:
-                            new_dict[target_parameters[i][0]] = (parameters[i], False)
-                        else:
-                            add_error_message(f'Cannot reference `{parameters[i][1]}` to `{target_parameters[i][1]}`', self)
-                    else:
-                        # 否则，赋值 value 并且然后传递
-                        # 切换 target 类型
-                        if target_parameters[i][1] == 'ARRAY' and target_parameters[i][3]:
-                            cp = copy.copy(parameters[i])
-                            cp.to_target(target_parameters[i][3])
-                            new_dict[target_parameters[i][0]] = (cp, False)
-                        else:
-                            new_dict[target_parameters[i][0]] = (
-                                stack.structs[target_parameters[i][1]](
-                                    copy.copy(parameters[i][0])
-                                ),
-                                False
-                            )
-                except:
-                    add_error_message(f'Function `{self.id}` expect a parameter with type `{target_parameters[i][1]}`, but found `{parameters[i][1]}`', self)
+        if pre_params is not None:
+            args = pre_params
         else:
-            if self.parameters:
-                add_error_message(f'Function `{self.id}` does not expect any parameters, but found {len(self.parameters)}', self)
+            args = self.parameters.exe() if self.parameters else []
+        target = function_obj.parameters.exe() if function_obj.parameters else []
+        if len(args) != len(target):
+            add_error_message(
+                f'`{self.id}` expects {len(target)} parameter(s), but found {len(args)}', self)
 
-        # 为函数创建新的命名空间
+        new_dict = {}
+        for (name, ptype, byref, elem_type), arg in zip(target, args):
+            try:
+                new_dict[name] = (self._bind_parameter(name, ptype, byref, elem_type, arg), False)
+            except CpcError as e:
+                # Point the message at the call site.
+                if e.lineno is None:
+                    e.lineno = self.lineno or None
+                raise
+
         stack.new_space(self.id, new_dict, {})
+        stack.call_depth += 1
+        try:
+            function_obj.statements.exe()
+            returns = stack.get_return_variables()
+        finally:
+            stack.call_depth -= 1
+            stack.pop_space()
 
-        # 运行函数
-        function_obj.statements.exe()
-        # 获取返回值
-        returns = stack.get_return_variables()
-
-        # 删除命名空间
-        stack.pop_space()
-
-        # 核查返回值，并返回
         if function_obj.returns:
-            if function_obj.returns == returns[1] and function_obj.returns == 'ARRAY':
+            if returns is None:
+                # SPEC 5.3: a FUNCTION must RETURN before its body ends.
+                add_error_message(f'function `{self.id}` ended without RETURN', self)
+            if function_obj.returns == 'ARRAY':
+                if returns[1] != 'ARRAY':
+                    add_error_message(
+                        f'function `{self.id}` must return `ARRAY`, found `{returns[1]}`', self)
                 if function_obj.arr_type:
-                    # 切换返回值的类型
                     returns.to_target(function_obj.arr_type)
                 return returns
-            # 查看返回值类型是否相同
-            # 如果一样，就直接返回
-            if function_obj.returns == returns[1]:
+            if returns[1] == function_obj.returns:
                 return returns
-            # 否则尝试创建对象进行返回
-            try:
-                return stack.structs[function_obj.returns](returns[0])
-            except:
-                add_error_message(f'Function {self.id} expect `{function_obj.returns}` to return, but found `{returns[1]}`', self)
-        else:
-            return None
+            value = values.check_assign(function_obj.returns, returns, self)
+            return (value, function_obj.returns)
+        if returns is not None:
+            add_error_message(f'`{self.id}` is a procedure and cannot RETURN a value', self)
+        return None
 
 class CallStatement(AST_Node):
     """CALL <target>: target may be a call, a method call, or a bare name
@@ -250,5 +259,7 @@ class Return(AST_Node):
         return LEVEL_STR * level + self.type + '\n' + self.expression.get_tree(level+1)
 
     def exe(self):
+        if stack.call_depth == 0:
+            add_error_message('RETURN outside a function or procedure', self)
         stack.set_return_variables(self.expression.exe())
         stack.return_request = True

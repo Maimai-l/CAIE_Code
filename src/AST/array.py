@@ -154,8 +154,8 @@ class Array_get(AST_Node):
             return arr[index[0]][0]
         return self.get_value(arr[index[0]][0][0], index[1:])
 
-    def exe(self):
-        indexes = self.indexes.exe()
+    def exe(self, pre_indexes=None):
+        indexes = pre_indexes if pre_indexes is not None else self.indexes.exe()
         arr = stack.get_variable(self.id)[0]
         if not isinstance(arr, dict):
             add_error_message(f'`{self.id}` is not an array', self)

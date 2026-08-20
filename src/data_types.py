@@ -161,6 +161,27 @@ class ARRAY(base):
                     raise CpcError(f'cannot convert `{v[i][0]}` into `{target}`')
 
 
+def clone_wrapper(w):
+    """Deep copy of a storage wrapper, for BYVAL parameters (SPEC 5.2).
+    Record/class instances are still passed by reference until record value
+    semantics land (plan step 10c)."""
+    if isinstance(w, ARRAY):
+        return ARRAY(_clone_array_dict(w.value), name=w.name)
+    if getattr(w, 'is_struct', False) or getattr(w, 'is_enum', False):
+        return w
+    return type(w)(w.value, name=w.name)
+
+
+def _clone_array_dict(d):
+    result = {}
+    for key, entry in d.items():
+        if key in ('left', 'right'):
+            result[key] = entry
+        else:
+            result[key] = (clone_wrapper(entry[0]), entry[1])
+    return result
+
+
 class POINTER(base):
     def __init__(self, value=None, *args, **kwargs):
         super().__init__(*args, **kwargs)

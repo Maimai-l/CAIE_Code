@@ -1,0 +1,9 @@
+PROCEDURE Inner()
+    x <- 9
+ENDPROCEDURE
+PROCEDURE Outer()
+    DECLARE x : INTEGER
+    CALL Inner()
+    OUTPUT x
+ENDPROCEDURE
+CALL Outer()
