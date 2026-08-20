@@ -18,31 +18,38 @@ class Enumerate_type(AST_Node):
         return LEVEL_STR * level + self.type + '\n' + LEVEL_STR * (level+1) + str(self.id) + '\n' + self.items.get_tree(level+1)
 
     def exe(self):
-        that = self
+        from .. import values as values_mod
+        enum_name = self.id
         items = self.items.exe()
+        values_mod.register_enum(enum_name, items)
 
         class e(base):
-            def __init__(self, name=that.id, *args, **kwargs):
+            """A variable of this enum type. Its value is the item ordinal,
+            starting at 1 (SPEC 4.8); the default is the first item."""
+
+            def __init__(self, value=1, name=enum_name, *args, **kwargs):
                 super().__init__(*args, **kwargs)
                 self.name = name
-                self.type = name
+                self.type = enum_name
                 self.items = items
                 self.is_enum = True
-
-            def __getitem__(self, key):
-                if key == 1:
-                    return self.type
-                else:
-                    return self
+                self.value = value if isinstance(value, int) else 1
 
             def set_value(self, value):
-                if value in self.items:
+                if isinstance(value, int) and 1 <= value <= len(self.items):
                     self.value = value
                 else:
-                    add_error_message(f'Invalid value `{value}` for enum `{self.type}`', self)
+                    add_error_message(f'invalid value `{value}` for enum `{self.type}`', self)
 
-        stack.add_struct(self.id, e)
-        stack.new_variable(self.id, self.id)
+            def __str__(self):
+                return self.items[self.value - 1]
+
+        stack.add_struct(enum_name, e)
+        # The type name itself resolves to an accessor object so that
+        # `Season.Spring` works as member access.
+        accessor = e(name=enum_name)
+        accessor.is_const = True
+        stack.current_space().new_variable(enum_name, accessor, True)
 
 class Enumerate_items(AST_Node):
     def __init__(self, *args, **kwargs):
@@ -231,16 +238,16 @@ class Composite_type_expression(AST_Node):
         left = self.exp1.exe()
         if left is None:
             add_error_message('expression has no value (a procedure returns nothing)', self)
-        obj = left[0]
+        # Variables arrive as storage wrappers, computed results as pairs.
+        obj = left if not isinstance(left, tuple) else left[0]
         if not hasattr(obj, 'is_enum'):
             add_error_message(f'a `{left[1]}` value has no members', self)
-        # Enum member access returns the item itself.
+        # Enum member access yields (ordinal, enum type) per SPEC 4.8.
         if obj.is_enum:
-            if self.exp2.id in obj.items:
-                return (self.exp2.id, 'STRING')
-            else:
-                add_error_message(f'Invalid value `{self.exp2.id}` for enum `{obj.type}`', self)
-                return
+            item = getattr(self.exp2, 'id', None)
+            if item in obj.items:
+                return (obj.items.index(item) + 1, obj.type)
+            add_error_message(f'`{item}` is not an item of enum `{obj.type}`', self)
         # Member access runs exp2 inside the object's space. Arguments and
         # indexes are evaluated FIRST, in the caller's scope, so that
         # obj.m(localVar) still sees the caller's locals (SPEC 5.1).

@@ -1,0 +1,2 @@
+TYPE Season = (Spring, Summer)
+OUTPUT Season.Monday

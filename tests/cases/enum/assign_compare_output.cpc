@@ -1,0 +1,9 @@
+TYPE Season = (Spring, Summer, Autumn, Winter)
+DECLARE s : Season
+s <- Season.Summer
+OUTPUT s
+IF s = Season.Summer THEN
+    OUTPUT "match"
+ENDIF
+OUTPUT s > Season.Spring
+OUTPUT Season.Winter

@@ -123,6 +123,8 @@ def preload_scripts(scripts_path):
 def reset_interpreter(scripts_path):
     """Fresh state for the next file of a multi-file run (SPEC 8.10)."""
     from .AST.data import stack
+    from . import values
     stack.__init__()
+    values.reset_enums()
     reset_imports()
     preload_scripts(scripts_path)

@@ -19,6 +19,18 @@ ANY_TYPES = (None, 'ANY')
 
 _COMPARE_OPS = ('=', '<>', '<', '<=', '>', '>=')
 
+# Enumerated types (SPEC 4.8): name -> ordered item names. An enum value
+# travels as (ordinal, type name) with ordinals starting at 1.
+ENUMS = {}
+
+
+def register_enum(name, items):
+    ENUMS[name] = list(items)
+
+
+def reset_enums():
+    ENUMS.clear()
+
 
 def _raise(message, node=None):
     raise CpcError(message, getattr(node, 'lineno', None) or None)
@@ -155,7 +167,9 @@ def assign_to(target, v, node=None):
     if getattr(target, 'is_const', False):
         _raise('cannot assign a value to a constant', node)
     if getattr(target, 'is_enum', False):
-        # Enum variables validate membership themselves (SPEC 4.8).
+        # SPEC 4.8: enum variables accept only their own enum's values.
+        if v[1] != target[1] and v[1] not in ANY_TYPES:
+            _raise(f'cannot assign `{v[1]}` to `{target[1]}`', node)
         target.set_value(v[0])
         return
     if getattr(target, 'is_struct', False):
@@ -252,6 +266,8 @@ def to_text(v, node=None):
         return date_text(value)
     if type_name == 'ARRAY':
         return array_text(value)
+    if type_name in ENUMS and isinstance(value, int) and 1 <= value <= len(ENUMS[type_name]):
+        return ENUMS[type_name][value - 1]
     return str(value)
 
 
