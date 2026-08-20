@@ -71,7 +71,7 @@ def get_time():
     options_dict['show_time'] = True
 
 def show_keywords():
-    from src.lex import reserved
+    from .lex import reserved
     keywords = sorted(reserved)
     l = {}
     for k in keywords:
@@ -139,6 +139,11 @@ def doc():
     from .history import HOME_PATH
     system = platform.system()
     file_path = os.path.join(HOME_PATH, 'Pseudocode Guide.pdf')
+    if not os.path.exists(file_path):
+        # pip installations do not ship the PDF (SPEC 8.12).
+        print('The official guide is available at:')
+        print('https://www.cambridgeinternational.org/Images/697401-2026-syllabus-legacy-notice.pdf')
+        return
     if system == 'Windows':
         os.startfile(file_path)
     elif system == 'Linux':
@@ -151,7 +156,10 @@ def init_requirements():
     import subprocess, sys as _sys
     from .history import HOME_PATH
     req = os.path.join(HOME_PATH, 'requirements.txt')
-    subprocess.call([_sys.executable, '-m', 'pip', 'install', '-r', req])
+    if os.path.exists(req):
+        subprocess.call([_sys.executable, '-m', 'pip', 'install', '-r', req])
+    else:
+        subprocess.call([_sys.executable, '-m', 'pip', 'install', 'ply', 'chardet', 'colorama'])
 
 # 输入参数: (参数简写, 参数全称, 运行函数, 描述, 是否需要退出, 是否需要参数，参数数量，函数所需参数)
 class Opt:

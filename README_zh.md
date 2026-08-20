@@ -10,56 +10,38 @@
 <a href="./README_zh.md">中文</a> | <a href="./README.md">English</a>
 </p>
 
-## 安装与使用
+## 安装
 
-> [在线版本](https://github.com/createchstudio/caie-code-environment)
+### 推荐方式:pip / pipx
 
-### 安装前提
-1. `Python3` 环境 *推荐使用 PyPy3 以获得更好的性能*
-2. `git` 指令
-> macOS用户请安装`Command Line Tools for Xcode`
-3. `cargo`命令
-
-### 正式安装
-0. 对于 macOS 用户，可使用以下脚本一键安装：
 ```shell
-curl -fsSL https://atcrea.tech/cpc-mac | sh
+pipx install "git+https://github.com/iewnfod/CAIE_Code.git"
+# 或
+pip install "git+https://github.com/iewnfod/CAIE_Code.git"
 ```
 
-> 对于想要一并Visual Studio Code以及配套[拓展](https://marketplace.visualstudio.com/items?itemName=CreatechStudioShanghaiInc.cpc-interpreter-extension)的用户，请使用以下脚本：
-> ```shell
-> curl -fsSL https://atcrea.tech/cpc-mac | sh -s -- --with-vsc
-> ```
+安装后即获得独立的 `cpc` 命令,不需要保留仓库目录。
+升级用 `pipx upgrade cpc-interpreter` 或 `pip install --upgrade ...`。
 
-1. 对于**Windows**用户，您可以直接使用以下脚本安装：
-```powershell
-irm https://atcrea.tech/cpc-win | iex
+如需在 git 检出目录中使用自更新命令 `cpc -u`,请安装可选依赖:
+`pip install "cpc-interpreter[update] @ git+..."`。
+
+### 从 git 检出运行(开发)
+
+```shell
+git clone https://github.com/iewnfod/CAIE_Code.git
+cd CAIE_Code
+pip install -r requirements.txt
+python3 main.py your_program.cpc     # 或把 bin/ 加入 PATH 后使用 `cpc`
 ```
 
-> 您需要手动安装[拓展](https://marketplace.visualstudio.com/items?itemName=CreatechStudioShanghaiInc.cpc-interpreter-extension)
+`cpc -u` 会原地更新 git 检出(改动本地文件前会先询问)。
+测试套件:`python3 tests/run_tests.py`。
 
-*对于其他用户...*
+### 状态目录
 
-1. 克隆此项目
-    ```git clone https://github.com/iewnfod/CAIE_Code.git```
-2. 进入项目
-    ```cd CAIE_Code```
-3. 运行
-    * 二进制文件存在于`bin`中，请将自己系统对应的二进制文件加入到`PATH`中
-    * `MacOS`若无法正常运行其中的二进制文件，可尝试自己编译 [`build.sh`](./build.sh)
-    * `Windows`若无法正常运行，也可尝试自己编译 [`build.ps1`](./build.ps1)
-    >若运行已有二进制文件后无反应，同上。若依旧无法解决，请提交issue
-    * 如果需要使用`man`指令，请自行将[cpc.1](./man/cpc.1)硬链接到你的`MANPATH`内，以便更新后不必再次链接。
-        * `Linux`用户可以使用以下指令：
-            ```
-            sudo ln -f ./man/cpc.1 /your/man/path
-            ```
-        * `Windows`用户请自行搜索
-
-### 更新
-* 如果您是完全使用以上步骤进行安装的，您可以使用`cpc -u`快速更新
-* 在`dc0cd71`之后引入自动更新功能，每周自动检测一次更新，可由选项配置
-* 如果您并没有使用`git`进行安装，您需要手动下载新的版本，并使用和您之前相同的方法安装
+配置、REPL 历史与包存放在 `$CPC_HOME`(默认 `~/.cpc`);
+运行时绝不写入安装目录。
 
 ## 用法
 ```
@@ -206,6 +188,24 @@ NEXT i
 ### 常见运算测试
 * [随机生成10w数据+希尔排序](test/sort_test.cpc)：3.5s 左右
 
+
+## 0.2 版行为变更
+
+0.2 的行为以 [docs/SPEC.md](docs/SPEC.md) 为准。主要可见变化:
+
+- 一行一条语句,语句不再跨行粘连;`CASE` 分支不再强制分号(旧分号仍兼容)。
+- `CALL P` / `PROCEDURE P` / `FUNCTION F RETURNS T` 支持无括号写法。
+- 运算符优先级修正(`AND` 高于 `OR`);比较不可连写;`p.x + p.y` 解析正确。
+- 类型诚实:`2.5 + 2.5` 得 `5.0`,`8 / 2` 得 `4.0`,REAL 不再被静默截断成
+  INTEGER,INPUT 按目标类型解析。
+- BYVAL 数组/记录深拷贝;词法作用域(过程只能看到自身与全局,看不到调用者局部)。
+- 错误输出到 stderr,带 `文件:行号`、源码行与指位符;失败时退出码非零;
+  运行错误立即终止。
+- `WRITEFILE` 写一行、`READFILE` 读一行,`RANDOM` 文件的 `SEEK` 真正生效;
+  枚举、`SUPER` 与继承可用。
+- 普通运行不联网、不自动更新、不安装依赖;更新是显式的 `cpc -u`。
+- 内置函数 `RANDOM(x)` 移除,请用 `RAND(x)`(均匀分布于 [0, x));
+  `SET`/`DEFINE` 集合类型仍未实现,现在会干净地报错。
 
 ## 标准
 ### 基本标准

@@ -29,12 +29,9 @@ def _require_update_deps():
         return False
     return True
 
-VERSION = ''
+from ._version import __version__ as VERSION
 
 super_fast = False
-
-with open(os.path.join(HOME_PATH, 'VERSION'), 'r') as f:
-    VERSION = f.read().strip()
 
 def init_git():
     from .global_var import config
@@ -62,7 +59,7 @@ def check_github_connectivity():
     except requests.RequestException:
         return False
 
-def check_update(repo: git.Repo, remote: git.Remote):
+def check_update(repo, remote):
     remote.fetch()
     local_branch = repo.active_branch
     from .global_var import config
@@ -126,7 +123,8 @@ def get_commit_hash_msg():
         return latest_commit_hash, latest_commit_message, local_commit_hash, local_commit_message
 
 def show_notification(_branch):
-    f = os.path.join(HOME_PATH, 'notification', 'notification.json')
+    from .history import PACKAGE_DIR
+    f = os.path.join(PACKAGE_DIR, 'notification', 'notification.json')
     with open(f, 'r') as file:
         notification_data = json.load(file)
     current_time = datetime.now()

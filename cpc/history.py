@@ -7,8 +7,12 @@ try:
 except Exception:
     readline = None
 
-# Installation directory (read-only at runtime, SPEC 8.13).
-HOME_PATH = dirname(dirname(__file__))
+# The package directory (bundled scripts, notification data).
+PACKAGE_DIR = dirname(os.path.abspath(__file__))
+# Installation root of a git checkout (VERSION, docs, the git repo for -u).
+# Under pip this points into site-packages and is only used by code that
+# checks for a git checkout first (SPEC 8.13/8.14).
+HOME_PATH = dirname(PACKAGE_DIR)
 
 # User state directory (SPEC 8.9): config, history, packages.
 STATE_DIR = os.environ.get('CPC_HOME') or join(os.path.expanduser('~'), '.cpc')

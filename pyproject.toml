@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cpc-interpreter"
+description = "CAIE pseudocode interpreter (cpc)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+dynamic = ["version"]
+dependencies = [
+    "ply>=3.11",
+    "chardet",
+    "colorama",
+]
+
+[project.optional-dependencies]
+# Needed only by the explicit `cpc -u` updater on git checkouts (SPEC 8.14).
+update = ["GitPython", "requests"]
+
+[project.urls]
+Repository = "https://github.com/iewnfod/CAIE_Code"
+
+[project.scripts]
+cpc = "cpc.main:cli"
+
+[tool.setuptools]
+packages = ["cpc", "cpc.AST"]
+
+[tool.setuptools.package-data]
+cpc = ["scripts/*.cpc", "notification/*.json"]
+
+[tool.setuptools.dynamic]
+version = { attr = "cpc._version.__version__" }

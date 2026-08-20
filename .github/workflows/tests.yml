@@ -18,3 +18,16 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install -r requirements.txt
       - run: python tests/run_tests.py
+
+  install-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install .
+      - name: run a program through the installed cpc command
+        run: |
+          echo 'OUTPUT 6 * 7' > smoke.cpc
+          test "$(cpc smoke.cpc)" = "42"

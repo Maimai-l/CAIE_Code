@@ -148,7 +148,7 @@ def grammar_gate():
     proc = subprocess.run(
         [sys.executable, '-c',
          'import sys; sys.path.insert(0, sys.argv[1]); '
-         'from src.parse import build_parser; build_parser(strict=True)',
+         'from cpc.parse import build_parser; build_parser(strict=True)',
          REPO],
         capture_output=True, text=True)
     if proc.returncode != 0:

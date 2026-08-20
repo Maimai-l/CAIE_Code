@@ -1,0 +1,1037 @@
+Metadata-Version: 2.4
+Name: cpc-interpreter
+Version: 0.2.0
+Summary: CAIE pseudocode interpreter (cpc)
+License: Mozilla Public License Version 2.0
+        ==================================
+        
+        1. Definitions
+        --------------
+        
+        1.1. "Contributor"
+            means each individual or legal entity that creates, contributes to
+            the creation of, or owns Covered Software.
+        
+        1.2. "Contributor Version"
+            means the combination of the Contributions of others (if any) used
+            by a Contributor and that particular Contributor's Contribution.
+        
+        1.3. "Contribution"
+            means Covered Software of a particular Contributor.
+        
+        1.4. "Covered Software"
+            means Source Code Form to which the initial Contributor has attached
+            the notice in Exhibit A, the Executable Form of such Source Code
+            Form, and Modifications of such Source Code Form, in each case
+            including portions thereof.
+        
+        1.5. "Incompatible With Secondary Licenses"
+            means
+        
+            (a) that the initial Contributor has attached the notice described
+                in Exhibit B to the Covered Software; or
+        
+            (b) that the Covered Software was made available under the terms of
+                version 1.1 or earlier of the License, but not also under the
+                terms of a Secondary License.
+        
+        1.6. "Executable Form"
+            means any form of the work other than Source Code Form.
+        
+        1.7. "Larger Work"
+            means a work that combines Covered Software with other material, in
+            a separate file or files, that is not Covered Software.
+        
+        1.8. "License"
+            means this document.
+        
+        1.9. "Licensable"
+            means having the right to grant, to the maximum extent possible,
+            whether at the time of the initial grant or subsequently, any and
+            all of the rights conveyed by this License.
+        
+        1.10. "Modifications"
+            means any of the following:
+        
+            (a) any file in Source Code Form that results from an addition to,
+                deletion from, or modification of the contents of Covered
+                Software; or
+        
+            (b) any new file in Source Code Form that contains any Covered
+                Software.
+        
+        1.11. "Patent Claims" of a Contributor
+            means any patent claim(s), including without limitation, method,
+            process, and apparatus claims, in any patent Licensable by such
+            Contributor that would be infringed, but for the grant of the
+            License, by the making, using, selling, offering for sale, having
+            made, import, or transfer of either its Contributions or its
+            Contributor Version.
+        
+        1.12. "Secondary License"
+            means either the GNU General Public License, Version 2.0, the GNU
+            Lesser General Public License, Version 2.1, the GNU Affero General
+            Public License, Version 3.0, or any later versions of those
+            licenses.
+        
+        1.13. "Source Code Form"
+            means the form of the work preferred for making modifications.
+        
+        1.14. "You" (or "Your")
+            means an individual or a legal entity exercising rights under this
+            License. For legal entities, "You" includes any entity that
+            controls, is controlled by, or is under common control with You. For
+            purposes of this definition, "control" means (a) the power, direct
+            or indirect, to cause the direction or management of such entity,
+            whether by contract or otherwise, or (b) ownership of more than
+            fifty percent (50%) of the outstanding shares or beneficial
+            ownership of such entity.
+        
+        2. License Grants and Conditions
+        --------------------------------
+        
+        2.1. Grants
+        
+        Each Contributor hereby grants You a world-wide, royalty-free,
+        non-exclusive license:
+        
+        (a) under intellectual property rights (other than patent or trademark)
+            Licensable by such Contributor to use, reproduce, make available,
+            modify, display, perform, distribute, and otherwise exploit its
+            Contributions, either on an unmodified basis, with Modifications, or
+            as part of a Larger Work; and
+        
+        (b) under Patent Claims of such Contributor to make, use, sell, offer
+            for sale, have made, import, and otherwise transfer either its
+            Contributions or its Contributor Version.
+        
+        2.2. Effective Date
+        
+        The licenses granted in Section 2.1 with respect to any Contribution
+        become effective for each Contribution on the date the Contributor first
+        distributes such Contribution.
+        
+        2.3. Limitations on Grant Scope
+        
+        The licenses granted in this Section 2 are the only rights granted under
+        this License. No additional rights or licenses will be implied from the
+        distribution or licensing of Covered Software under this License.
+        Notwithstanding Section 2.1(b) above, no patent license is granted by a
+        Contributor:
+        
+        (a) for any code that a Contributor has removed from Covered Software;
+            or
+        
+        (b) for infringements caused by: (i) Your and any other third party's
+            modifications of Covered Software, or (ii) the combination of its
+            Contributions with other software (except as part of its Contributor
+            Version); or
+        
+        (c) under Patent Claims infringed by Covered Software in the absence of
+            its Contributions.
+        
+        This License does not grant any rights in the trademarks, service marks,
+        or logos of any Contributor (except as may be necessary to comply with
+        the notice requirements in Section 3.4).
+        
+        2.4. Subsequent Licenses
+        
+        No Contributor makes additional grants as a result of Your choice to
+        distribute the Covered Software under a subsequent version of this
+        License (see Section 10.2) or under the terms of a Secondary License (if
+        permitted under the terms of Section 3.3).
+        
+        2.5. Representation
+        
+        Each Contributor represents that the Contributor believes its
+        Contributions are its original creation(s) or it has sufficient rights
+        to grant the rights to its Contributions conveyed by this License.
+        
+        2.6. Fair Use
+        
+        This License is not intended to limit any rights You have under
+        applicable copyright doctrines of fair use, fair dealing, or other
+        equivalents.
+        
+        2.7. Conditions
+        
+        Sections 3.1, 3.2, 3.3, and 3.4 are conditions of the licenses granted
+        in Section 2.1.
+        
+        3. Responsibilities
+        -------------------
+        
+        3.1. Distribution of Source Form
+        
+        All distribution of Covered Software in Source Code Form, including any
+        Modifications that You create or to which You contribute, must be under
+        the terms of this License. You must inform recipients that the Source
+        Code Form of the Covered Software is governed by the terms of this
+        License, and how they can obtain a copy of this License. You may not
+        attempt to alter or restrict the recipients' rights in the Source Code
+        Form.
+        
+        3.2. Distribution of Executable Form
+        
+        If You distribute Covered Software in Executable Form then:
+        
+        (a) such Covered Software must also be made available in Source Code
+            Form, as described in Section 3.1, and You must inform recipients of
+            the Executable Form how they can obtain a copy of such Source Code
+            Form by reasonable means in a timely manner, at a charge no more
+            than the cost of distribution to the recipient; and
+        
+        (b) You may distribute such Executable Form under the terms of this
+            License, or sublicense it under different terms, provided that the
+            license for the Executable Form does not attempt to limit or alter
+            the recipients' rights in the Source Code Form under this License.
+        
+        3.3. Distribution of a Larger Work
+        
+        You may create and distribute a Larger Work under terms of Your choice,
+        provided that You also comply with the requirements of this License for
+        the Covered Software. If the Larger Work is a combination of Covered
+        Software with a work governed by one or more Secondary Licenses, and the
+        Covered Software is not Incompatible With Secondary Licenses, this
+        License permits You to additionally distribute such Covered Software
+        under the terms of such Secondary License(s), so that the recipient of
+        the Larger Work may, at their option, further distribute the Covered
+        Software under the terms of either this License or such Secondary
+        License(s).
+        
+        3.4. Notices
+        
+        You may not remove or alter the substance of any license notices
+        (including copyright notices, patent notices, disclaimers of warranty,
+        or limitations of liability) contained within the Source Code Form of
+        the Covered Software, except that You may alter any license notices to
+        the extent required to remedy known factual inaccuracies.
+        
+        3.5. Application of Additional Terms
+        
+        You may choose to offer, and to charge a fee for, warranty, support,
+        indemnity or liability obligations to one or more recipients of Covered
+        Software. However, You may do so only on Your own behalf, and not on
+        behalf of any Contributor. You must make it absolutely clear that any
+        such warranty, support, indemnity, or liability obligation is offered by
+        You alone, and You hereby agree to indemnify every Contributor for any
+        liability incurred by such Contributor as a result of warranty, support,
+        indemnity or liability terms You offer. You may include additional
+        disclaimers of warranty and limitations of liability specific to any
+        jurisdiction.
+        
+        4. Inability to Comply Due to Statute or Regulation
+        ---------------------------------------------------
+        
+        If it is impossible for You to comply with any of the terms of this
+        License with respect to some or all of the Covered Software due to
+        statute, judicial order, or regulation then You must: (a) comply with
+        the terms of this License to the maximum extent possible; and (b)
+        describe the limitations and the code they affect. Such description must
+        be placed in a text file included with all distributions of the Covered
+        Software under this License. Except to the extent prohibited by statute
+        or regulation, such description must be sufficiently detailed for a
+        recipient of ordinary skill to be able to understand it.
+        
+        5. Termination
+        --------------
+        
+        5.1. The rights granted under this License will terminate automatically
+        if You fail to comply with any of its terms. However, if You become
+        compliant, then the rights granted under this License from a particular
+        Contributor are reinstated (a) provisionally, unless and until such
+        Contributor explicitly and finally terminates Your grants, and (b) on an
+        ongoing basis, if such Contributor fails to notify You of the
+        non-compliance by some reasonable means prior to 60 days after You have
+        come back into compliance. Moreover, Your grants from a particular
+        Contributor are reinstated on an ongoing basis if such Contributor
+        notifies You of the non-compliance by some reasonable means, this is the
+        first time You have received notice of non-compliance with this License
+        from such Contributor, and You become compliant prior to 30 days after
+        Your receipt of the notice.
+        
+        5.2. If You initiate litigation against any entity by asserting a patent
+        infringement claim (excluding declaratory judgment actions,
+        counter-claims, and cross-claims) alleging that a Contributor Version
+        directly or indirectly infringes any patent, then the rights granted to
+        You by any and all Contributors for the Covered Software under Section
+        2.1 of this License shall terminate.
+        
+        5.3. In the event of termination under Sections 5.1 or 5.2 above, all
+        end user license agreements (excluding distributors and resellers) which
+        have been validly granted by You or Your distributors under this License
+        prior to termination shall survive termination.
+        
+        ************************************************************************
+        *                                                                      *
+        *  6. Disclaimer of Warranty                                           *
+        *  -------------------------                                           *
+        *                                                                      *
+        *  Covered Software is provided under this License on an "as is"       *
+        *  basis, without warranty of any kind, either expressed, implied, or  *
+        *  statutory, including, without limitation, warranties that the       *
+        *  Covered Software is free of defects, merchantable, fit for a        *
+        *  particular purpose or non-infringing. The entire risk as to the     *
+        *  quality and performance of the Covered Software is with You.        *
+        *  Should any Covered Software prove defective in any respect, You     *
+        *  (not any Contributor) assume the cost of any necessary servicing,   *
+        *  repair, or correction. This disclaimer of warranty constitutes an   *
+        *  essential part of this License. No use of any Covered Software is   *
+        *  authorized under this License except under this disclaimer.         *
+        *                                                                      *
+        ************************************************************************
+        
+        ************************************************************************
+        *                                                                      *
+        *  7. Limitation of Liability                                          *
+        *  --------------------------                                          *
+        *                                                                      *
+        *  Under no circumstances and under no legal theory, whether tort      *
+        *  (including negligence), contract, or otherwise, shall any           *
+        *  Contributor, or anyone who distributes Covered Software as          *
+        *  permitted above, be liable to You for any direct, indirect,         *
+        *  special, incidental, or consequential damages of any character      *
+        *  including, without limitation, damages for lost profits, loss of    *
+        *  goodwill, work stoppage, computer failure or malfunction, or any    *
+        *  and all other commercial damages or losses, even if such party      *
+        *  shall have been informed of the possibility of such damages. This   *
+        *  limitation of liability shall not apply to liability for death or   *
+        *  personal injury resulting from such party's negligence to the       *
+        *  extent applicable law prohibits such limitation. Some               *
+        *  jurisdictions do not allow the exclusion or limitation of           *
+        *  incidental or consequential damages, so this exclusion and          *
+        *  limitation may not apply to You.                                    *
+        *                                                                      *
+        ************************************************************************
+        
+        8. Litigation
+        -------------
+        
+        Any litigation relating to this License may be brought only in the
+        courts of a jurisdiction where the defendant maintains its principal
+        place of business and such litigation shall be governed by laws of that
+        jurisdiction, without reference to its conflict-of-law provisions.
+        Nothing in this Section shall prevent a party's ability to bring
+        cross-claims or counter-claims.
+        
+        9. Miscellaneous
+        ----------------
+        
+        This License represents the complete agreement concerning the subject
+        matter hereof. If any provision of this License is held to be
+        unenforceable, such provision shall be reformed only to the extent
+        necessary to make it enforceable. Any law or regulation which provides
+        that the language of a contract shall be construed against the drafter
+        shall not be used to construe this License against a Contributor.
+        
+        10. Versions of the License
+        ---------------------------
+        
+        10.1. New Versions
+        
+        Mozilla Foundation is the license steward. Except as provided in Section
+        10.3, no one other than the license steward has the right to modify or
+        publish new versions of this License. Each version will be given a
+        distinguishing version number.
+        
+        10.2. Effect of New Versions
+        
+        You may distribute the Covered Software under the terms of the version
+        of the License under which You originally received the Covered Software,
+        or under the terms of any subsequent version published by the license
+        steward.
+        
+        10.3. Modified Versions
+        
+        If you create software not governed by this License, and you want to
+        create a new license for such software, you may create and use a
+        modified version of this License if you rename the license and remove
+        any references to the name of the license steward (except to note that
+        such modified license differs from this License).
+        
+        10.4. Distributing Source Code Form that is Incompatible With Secondary
+        Licenses
+        
+        If You choose to distribute Source Code Form that is Incompatible With
+        Secondary Licenses under the terms of this version of the License, the
+        notice described in Exhibit B of this License must be attached.
+        
+        Exhibit A - Source Code Form License Notice
+        -------------------------------------------
+        
+          This Source Code Form is subject to the terms of the Mozilla Public
+          License, v. 2.0. If a copy of the MPL was not distributed with this
+          file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        
+        If it is not possible or desirable to put the notice in a particular
+        file, then You may include the notice in a location (such as a LICENSE
+        file in a relevant directory) where a recipient would be likely to look
+        for such a notice.
+        
+        You may add additional accurate notices of copyright ownership.
+        
+        Exhibit B - "Incompatible With Secondary Licenses" Notice
+        ---------------------------------------------------------
+        
+          This Source Code Form is "Incompatible With Secondary Licenses", as
+          defined by the Mozilla Public License, v. 2.0.
+        
+Project-URL: Repository, https://github.com/iewnfod/CAIE_Code
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: ply>=3.11
+Requires-Dist: chardet
+Requires-Dist: colorama
+Provides-Extra: update
+Requires-Dist: GitPython; extra == "update"
+Requires-Dist: requests; extra == "update"
+Dynamic: license-file
+
+# CAIE Code (cpc)
+
+<p align="center">
+<a href="./assets/cpc.svg">
+<img src="./assets/cpc.svg" width="100" height="100" alt="logo">
+</a>
+<h3 align="center">the CAIE Pseudocode Interpreter</h3>
+</p>
+<p align="center">
+<a href="./README_zh.md">中文</a> | <a href="./README.md">English</a>
+</p>
+
+## Installation and Update
+
+> [Online Version](https://github.com/createchstudio/caie-code-environment)
+
+### Installation Preliminaries
+
+1. Have `python3` installed on your computer.
+
+> It is suggested to use `pypy3` to achieve the best efficiency.
+
+1. Have `git` installed on your computer. If you do not know what `git` is, see https://git-scm.com/downloads.
+
+> For **macOS** users ensure you installed `Command Line Tools for Xcode`.
+
+3. `cargo` if you want to compile manually
+
+### Installation
+
+0. For **macOS** users, you can install directly using following scripts:
+```shell
+curl -fsSL https://atcrea.tech/cpc-mac | sh
+```
+
+> For those who want to install with Visual Studio Code as well as its [extension](https://marketplace.visualstudio.com/items?itemName=CreatechStudioShanghaiInc.cpc-interpreter-extension), you can use the following script:
+> ```shell
+> curl -fsSL https://atcrea.tech/cpc-mac | sh -s -- --with-vsc
+> ```
+
+1. For **Windows** users, you can install directly using following scripts:
+```powershell
+irm https://atcrea.tech/cpc-win | iex
+```
+
+> You have to manually install the [extension](https://marketplace.visualstudio.com/items?itemName=CreatechStudioShanghaiInc.cpc-interpreter-extension) for Visual Studio Code.
+
+*For other users...*
+
+1. Clone the project to your computer using
+    `git clone https://github.com/iewnfod/CAIE_Code.git`.
+2. Enter the project folder: `cd CAIE_Code`.
+
+3. The executable programs are in `bin/` folder. You may directly run or consider adding `bin/` to your `PATH`.
+
+4. If you want to compile manually:
+  - **macOS**: run `build.sh`
+  - **Windows**: run `build.ps1`
+
+5. If you want to see the manual page from `man` command, you should consider link the manual file `man/cpc.1` to your `MANPATH`.
+
+    > For example(**Linux**): `sudo ln -f ./man/cpc.1 /your/man/path`.
+
+6. If you cannot execute the complied files, please submit the problems on our [issue page](https://github.com/iewnfod/CAIE_Code/issues).
+
+### Update
+* If you followed the instructions and used `git` or PKG to install `cpc`, you can update easily using `cpc -u`.
+
+* An auto-update feature is introduced after `dc0cd71` to automatically detect updates once a week.
+
+* Otherwise, you should manually re-install the whole project.
+
+## Usage
+
+`cpc [filepath] [options]`
+
+It runs the entire file if `filepath` is provided, otherwise, it enters playground mode.
+### Options
+
+| Mnemonic | Option | Description |
+| -------- | ------ | ----------- |
+| `-c` | `--config` | To set configs of this interpreter |
+| `-d` | `--document` | To show the official document |
+| `-h` | `--help` | To show the help page |
+| `-k` | `--keywords` | To show all the keywords |
+| `-m` | `--migrate` | To migrate `.p` files to `.cpc` in a specified directory |
+| `-n` | `--notification` | To show notification published by developer (only if this is not expired) |
+| `-p` | `--parse` | To show parse information during running |
+| `-t` | `--time` | To show the time for the script to run |
+| `-u` | `--update` | To update the version |
+| `-v` | `--version` | To show the version of this interpreter |
+| `-gt` | `--get-tree` | To show the tree of the program after being parsed |
+| `-lc` | `--list-configs` | To list all the configs of the interpreter |
+| `-ne` | `--no-error` | To remove all error messages |
+| `-rc` | `--reset-configs` | To reset all the configs of the interpreter |
+| `-init` | `--init-requirements` | To install all dependences |
+
+### Config
+
+- `remote`
+  - `github`: Use GitHub as the update source. This source is always the latest.
+  - `gitee`: Use Gitee as the update source, which might be slower than Github.
+
+- `branch`
+
+  - `stable`: Updates are slow, but the most stable.
+  - `nightly`: Early adopters can try this branch, please actively report the issue.
+  - `dev`: The latest version of CPC may contain many untested functions.
+
+  > This setting needs to be run `cpc -u` once for it to take effect.
+
+  > In a developer mod, your remote will not be changed by config and the branch will be locked in `dev`.
+
+- `auto-update`
+  - `true`：Enable auto update.
+  - `false`：Disable auto update.
+
+- `last-auto-update`
+    All non-negative real numbers are accepted and automatically updated by the system.
+
+- `interval-update`
+    All non-negative integers, in seconds, are accepted as the automatic update interval.
+
+- `recursion-limit(rl)`
+    all integer number as the recursion depth limit of the interpreter.
+
+- `integrity-protection`
+
+    - `true`: Enable integrity protection.
+    - `false`: Disable integrity protection.
+
+    > Integrity Protection prevent any accidental or malicious modification of the interpreter.
+
+    > This protection will be automatically disabled in developer mode.
+
+- `dev`
+
+    - `true`: Enable developer mode.
+    - `false`: Disable developer mode.
+
+- Developer Options
+
+    - `dev.simulate-update`
+      - `true`: Enable simulation updates
+      - `false`: Disable simulation updates
+
+## FAQs
+
+### Import Error
+Please try to install all Python packages manually using
+`pip install -r requirements.txt`
+
+### Import Error after I manually installed packages
+The program will automatically detect `pypy3` when available and use it to interpret pseudocode because it has better efficiency.
+
+If you have `pypy3` installed you should install manually using `pypy3 -m pip install -r requirements.txt`
+
+### Incorrect \<up\>, \<down\>, \<left\>, \<right\> key actions when in playground mode
+You should retry `pip install readline` or `pip install gnureadline`.
+
+### OSError when launching
+Enter the directory of this project, and run
+```shell
+rm -rf .cpc_history
+cpc -u
+```
+
+### Other problems?
+If it still fails after re-installation, please report it to us on the [issue page](https://github.com/iewnfod/CAIE_Code/issues).
+
+
+## Efficiency test
+
+### Test Environment
+- machine: 2020 MacBook Pro
+- processor: Apple M1
+- RAM: 8GB
+- Cores: 8 (4 efficient, 4 performance)
+- OS: macOS 14.1.1 (23B81)
+- Python version: PyPy 3.9.16
+
+### Basic Tests
+- assignment: 12M/s
+```
+DECLARE a : INTEGER
+FOR i <- 1 TO 12000000
+    a <- i
+NEXT i
+```
+
+- explicit conversion and assignment: 7.6M/s
+```
+DECLARE a : STRING
+FOR i <- 1 TO 7600000
+    a <- STRING(i)
+NEXT i
+```
+
+- implicit conversion and assignment: 10M/s
+```
+DECLARE a : STRING
+FOR i <- 1 TO 10000000
+    a <- i
+NEXT i
+```
+
+- print to terminal: 650K/s
+```
+FOR i <- 1 TO 650000
+    OUTPUT i
+NEXT i
+```
+
+### Computation Tests
+- [generating 100k randoms and shell sorting](test/sort_test.cpc): about 3.5s
+
+
+## Standards
+
+### Basic Standards
+
+- use camelCase naming
+- use `.cpc` as the file suffix
+- use `utf-8` encoding
+- all reserved words are in upper case
+- the program is case-sensitive
+- use `//` to comment code
+
+### Features
+Most syntax follows the [pseudocode standard of CAIE](https://www.cambridgeinternational.org/Images/697401-2026-syllabus-legacy-notice.pdf).
+
+However, indentation is *suggested but not compulsory*.
+
+Each statement following `CASE` statement must end with a `;`, semicolon.
+
+### Basic Data Types
+The following items give the `DATATYPE`, its description, and the default value set when defined in brackets.
+
+* `INTEGER` integer, whole number (`0`)
+    ```
+    1
+    2
+    123
+    -123
+    ```
+* `REAL` float-point number (`0.0`)
+    ```
+    1.1
+    0.1
+    -12.1233
+    ```
+* `CHAR` one single character (`''`)
+    ```
+    '1'
+    '!'
+    'd'
+    ```
+* `STRING` string (`""`)
+    ```
+    "Hello"
+    "World"
+    "!"
+    ```
+* `BOOLEAN` boolean (`FALSE`)
+    ```
+    TRUE
+    FALSE
+    ```
+* `DATE` date (current date)
+    ```
+    25/07/2023
+    10/12/2012
+    ```
+    *
+
+`None` is a null datatype returned by some special functions. it should not be used in normal coding and cannot be declared.
+
+### Syntax Definitions
+
+1. Variables and constants
+    * Declare variables
+        ```
+        DECLARE <identifier> : <data type>
+        DECLARE <identifier> : ARRAY [<lower>:<upper>, ...] OF <data type>
+        ```
+    * Declare constants
+        ```
+        CONSTANT <identifier> = <value>
+        ```
+    * Assignment
+        ```
+        <identifier> <- <value>
+        <identifier>[<index>, ...] <- <value>
+        ```
+      > Pseudocode uses `<-` instead of `=`.
+2. I/O
+    * Input
+        ```
+        INPUT <identifier>
+        ```
+    * Output
+        ```
+        OUTPUT <value>, ...
+        ```
+3. Operations
+    * `+` addition
+    * `-` subtraction
+    * `*` multiplication
+    * `/` division
+    * `>` greater than
+    * `>=` greater than or equal to
+    * `<` smaller than
+    * `<=` smaller than  or equal to
+    * `=` equal (NOT AN ASSIGNMENT STATEMENT)
+    * `<>` not equal
+    * `&` conglomerate strings
+    * `MOD` modulus, find the remainder
+    * `DIV` integer division
+4. Logic operations
+    * `AND`
+    * `OR`
+    * `NOT`
+5. Conditional statements
+    * IF statements
+        ```
+        IF <condition> THEN
+            <statements>
+        ENDIF
+
+        IF <condition> THEN
+            <statements>
+        ELSE
+            <statements>
+        ENDIF
+        ```
+    * CASE statements
+        > IMPORTANT: official standards do not have semicolons `;` here
+        ```
+        CASE OF <identifier>
+            <value> : <statements>;
+            <value> : <statements>;
+            ...
+            OTHERWISE : <statements>;
+        ENDCASE
+        ```
+6. Loop statements
+    * FOR loop
+        ```
+        FOR <identifier> <- <value> TO <value>
+            <statements>
+        NEXT <identifier>
+        ```
+    * REPEAT loop
+        ```
+        REPEAT
+            <statements>
+        UNTIL <condition>
+        ```
+    * WHILE loop
+        ```
+        WHILE <condition>
+            <statements>
+        ENDWHILE
+7. functions
+    * functions without a return value (procedure)
+        ```
+        PROCEDURE <identifier> ()
+            <statements>
+        ENDPROCEDURE
+
+        PROCEDURE <identifier> (<param> : <data type>, ...)
+            <statements>
+        ENDPROCEDURE
+        ```
+    * call a procedure
+        ```
+        CALL <identifier> ()
+
+        CALL <identifier> (<value>, ...)
+        ```
+    * functions with return values
+        ```
+        FUNCTION <identifier> RETURNS <data type>
+            <statements>
+            RETURN <value>
+        ENDFUNCTION
+
+        FUNCTION <identifier> (<param> : <data type>, ...) RETURNS <data type>
+            <statements>
+            RETURN <value>
+        ENDFUNCTION
+    * call a function with return values
+        ```
+        <identifier> ()
+
+        <identifier> (<value>, ...)
+        ```
+    * Before the parameters of those sub-routines, you *can* use `BYREF` or `BYVAL` to force the program to pass those parameters by reference or by-value respectively. If no `BYREF` nor `BYVAL` is given, the program will follow the prior parameter. If the program cannot find a clear indication it will, by default pass parameters by value.
+        * If you explicitly define the data types of the array passed `BYVAL` the program will implicitly convert to the designated data type; the program will not convert data types when passed `BYREF`.
+        * `BYREF` : pass the reference of a variable
+        * `BYVAL` : pass a copy of the variable
+8. File I/O
+    * open a file
+        ```
+        OPENFILE <file path> FOR <file mode>
+        ```
+    * read a file
+        ```
+        READFILE <file path>, <variable>
+        ```
+    * write to a file
+        ```
+        WRITEFILE <file path>, <data>
+        ```
+    * close a file
+        ```
+        CLOSEFILE <file path>
+        ```
+    * locate in the file
+        ```
+        SEEK <file path>, <address>
+        ```
+    * File Mode
+        1. `READ`
+        2. `WRITE`
+        3. `APPEND`
+        4. `RANDOM`
+9. Self-defined data types
+    * enumerate type
+        ```
+        TYPE <identifier> = (<identifier>, ...)
+        ```
+    * pointer type
+        ```
+        TYPE <identifier> = ^<data type>
+        ```
+    * records(classes)
+    > In this case, the program will not check the data types when assigning a variable of this type to another. The program will assign the other variable as the *reference* for this one.
+        ```
+        TYPE <identifier>
+            <statements>
+        ENDTYPE
+        ```
+10. Object Oriented Programme
+    * define an object
+        ```
+        CLASS <identifier>
+            PUBLIC PROCEDURE NEW (<params>)
+                <statements>
+            ENDPROCEDURE
+            <statements>
+        ENDCLASS
+        ```
+    * private or public variable
+        ```
+        PRIVATE <identifier> : <type>
+        PUBLIC <identifier> : <type>
+        ```
+    * private or public procedure and function
+        ```
+        PRIVATE PROCEDURE <identifier> (<params>)
+            <statements>
+        ENDPROCEDURE
+
+        PUBLIC PROCEDURE <identifier> (<params>)
+            <statements>
+        ENDPROCEDURE
+
+        PRIVATE FUNCTION <identifier> (<params>) RETURNS <type>
+            <statements>
+        ENDFUNCTION
+
+        PUBLIC FUNCTION <identifier> (<params>) RETURNS <type>
+            <statements>
+        ENDFUNCTION
+        ```
+    * create an object
+        ```
+        NEW <identifier> (<values>)
+        ```
+
+    > If you do not sign a variable or procedure or function explicitly, it will be public by default.
+
+### Special Syntax of **CPC** Interpreter
+* delete a variable or constant on RAM
+    ```
+    DELETE <identifier>
+    ```
+* do nothing
+    ```
+    PASS
+    ```
+* import **CPC** files
+    ```
+    IMPORT <expression>
+    ```
+    > `expression` here should be a string within double quotes.
+    > There is no isolation between the imported file and the main file. Identifiers may collide.
+    > It is suggested to use the [`Import`](scripts/import.cpc) function to import a package instead.
+    ```
+    CONSTANT <identifier> = Import("<path to import file>")
+    ```
+
+### Built-in Functions from CAIE Standard
+* `LEFT(ThisString : STRING, x : INTEGER) RETURNS STRING`
+    ```
+    $ LEFT("ABCDEFGH", 3)
+    "ABC"
+    ```
+* `RIGHT(ThisString : STRING, x : INTEGER) RETURNS STRING`
+    ```
+    $ RIGHT("ABCDEFGH", 3)
+    "FGH"
+    ```
+* `LENGTH(ThisString : STRING) RETURNS INTEGER`
+    ```
+    $ LENGTH("Happy Days")
+    10
+    ```
+* `MID(ThisString : STRING, x : INTEGER, y : INTEGER) RETURNS STRING`
+    ```
+    $ MID("ABCDEFGH", 2, 3)
+    "BCD"
+    ```
+* `LCASE(ThisChar : CHAR) RETURNS CHAR`
+> Decrapricated since 2023
+    ```
+    $ LCASE('W')
+    'w'
+    ```
+* `UCASE(ThisChar : CHAR) RETURNS CHAR`
+> Decrapricated since 2023
+    ```
+    $ UCASE('h')
+    'H'
+    ```
+* `TO_UPPER(x : <datatype>) RETURNS <datatype>`
+> <datatype> may be `CHAR` or `STRING`
+  ```
+    $ TO_UPPER("hello")
+    "HELLO"
+
+    $ TO_UPPER('a')
+    'A'
+  ```
+* `TO_LOWER(x : <datatype>) RETURNS <datatype>`
+> <datatype> may be `CHAR` or `STRING`
+  ```
+    $ TO_LOWER("HELLO")
+    "hello"
+
+    $ TO_LOWER('A')
+    'a'
+  ```
+* `INT(x : REAL) RETURNS INTEGER`
+    ```
+    $ INT(27.5415)
+    27
+    ```
+* `RAND(x : INTEGER) RETURNS REAL`
+    ```
+    $ RAND(87)
+    35.43
+    ```
+* `EOF(file_path : STRING) RETURNS BOOLEAN`
+* `POW(x: REAL, y: REAL) RETURNS REAL`
+* `DAY(ThisDate : DATE) RETURNS INTEGER`
+  ```
+    $ DAY(25/07/2023)
+    25
+  ```
+* `MONTH(ThisDate : DATE) RETURNS INTEGER`
+  ```
+    $ MONTH(25/07/2023)
+    7
+  ```
+* `YEAR(ThisDate : DATE) RETURNS INTEGER`
+  ```
+    $ YEAR(12/12/2005)
+    2005
+  ```
+* `DAYINDEX(ThisDate : DATE) RETURNS INTEGER`
+> Where Sunday = 1, Monday = 2 etc
+  ```
+    $ DAYINDEX(25/03/2024)
+    2
+  ```
+* `SETDATE(day : INTEGER, month : INTEGER, year : INTEGER) RETURNS DATE`
+  ```
+    $ SETDATE(25, 03, 2024)
+    25/03/2024
+  ```
+* `TODAY() RETURNS DATE`
+  ```
+    $ TODAY()
+    25/03/2024
+  ```
+
+### Built-in Functions of this Interpreter
+> These functions are fairly useful, but they are not included in the [CAIE standard](https://www.cambridgeinternational.org/Images/697401-2026-syllabus-legacy-notice.pdf).
+
+* `EXIT(code : INTEGER)`: exit the program with the exit code
+    `code`. Defalt exit code is 0.
+
+* `ROUND(x : REAL, decimalPlace : INTEGER)`: round the
+    float-point number `x` to some decimal place. The default decimal place is 0(to the nearest whole number).
+
+* `PYTHON(code : STRING, *args)` is a Python interface. You can pass any Python statements into `code` and the program will run it in standard Python. the return value of this function is the value of variable `_result` in the Python code.
+
+    Example:
+    ```
+    > DECLARE a : INTEGER
+    > a <- 0
+    > OUTPUT PYTHON("_result=a+1", a)
+    1
+    ```
+    > if the Python code does not assign a value to `_result`, the function will return `None`.
+    > you *must* pass all variables used in the Python code in `*args`, otherwise, it will not run correctly.
+
+* `VARTYPE(v)` is an interface to get the type of `v` and return it as a string.
+
+* `ANY` is a type that used to allow some unknown type data.
+
+* For more non-official scripts, please see [scripts](./scripts).
+
+## Targets
+### Version 0.1.x Target
+- [ ] Implement all features provided by [official document](./Pseudocode%20Guide%20for%20Teachers.pdf).
+- [ ] Increase the stability for running to achieve a relatively useable situation.
+### Version 0.2.x Target
+- [ ] Give the kernel a great update and optimization.
+- [ ] Implement a high performance virtual machine to run. (Similar as the solution of Java)
+### Version 0.3.x Target
+- [ ] Allow building into executable binary file.
+### Long-term Targets
+- [ ] Provide more packages for use.
+- [ ] Increase running speed and stability.
+- [ ] Implement bootstrap.
+
+## Sponsors
+<a herf="https://1password.com/">
+    <img src="https://www.vectorlogo.zone/logos/1password/1password-ar21.svg" height="100" alt="1Password">
+
+## Author and Contributors
+<a href="https://github.com/iewnfod/CAIE_Code/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=iewnfod/CAIE_Code">
+</a>

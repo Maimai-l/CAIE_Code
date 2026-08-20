@@ -1,0 +1,7 @@
+ply>=3.11
+chardet
+colorama
+
+[update]
+GitPython
+requests

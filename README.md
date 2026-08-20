@@ -10,65 +10,38 @@
 <a href="./README_zh.md">中文</a> | <a href="./README.md">English</a>
 </p>
 
-## Installation and Update
+## Installation
 
-> [Online Version](https://github.com/createchstudio/caie-code-environment)
+### Recommended: pip / pipx
 
-### Installation Preliminaries
-
-1. Have `python3` installed on your computer.
-
-> It is suggested to use `pypy3` to achieve the best efficiency.
-
-1. Have `git` installed on your computer. If you do not know what `git` is, see https://git-scm.com/downloads.
-
-> For **macOS** users ensure you installed `Command Line Tools for Xcode`.
-
-3. `cargo` if you want to compile manually
-
-### Installation
-
-0. For **macOS** users, you can install directly using following scripts:
 ```shell
-curl -fsSL https://atcrea.tech/cpc-mac | sh
+pipx install "git+https://github.com/iewnfod/CAIE_Code.git"
+# or
+pip install "git+https://github.com/iewnfod/CAIE_Code.git"
 ```
 
-> For those who want to install with Visual Studio Code as well as its [extension](https://marketplace.visualstudio.com/items?itemName=CreatechStudioShanghaiInc.cpc-interpreter-extension), you can use the following script:
-> ```shell
-> curl -fsSL https://atcrea.tech/cpc-mac | sh -s -- --with-vsc
-> ```
+That installs a standalone `cpc` command. No repository checkout is needed.
+Upgrade with `pipx upgrade cpc-interpreter` or `pip install --upgrade ...`.
 
-1. For **Windows** users, you can install directly using following scripts:
-```powershell
-irm https://atcrea.tech/cpc-win | iex
+To use the git-based self-updater (`cpc -u`) from a checkout, install the
+optional extra: `pip install "cpc-interpreter[update] @ git+..."`.
+
+### From a git checkout (development)
+
+```shell
+git clone https://github.com/iewnfod/CAIE_Code.git
+cd CAIE_Code
+pip install -r requirements.txt
+python3 main.py your_program.cpc     # or add bin/ to PATH and use `cpc`
 ```
 
-> You have to manually install the [extension](https://marketplace.visualstudio.com/items?itemName=CreatechStudioShanghaiInc.cpc-interpreter-extension) for Visual Studio Code.
+`cpc -u` updates a git checkout in place (it asks before touching local
+modifications). Run the test suite with `python3 tests/run_tests.py`.
 
-*For other users...*
+### Where cpc keeps its state
 
-1. Clone the project to your computer using
-    `git clone https://github.com/iewnfod/CAIE_Code.git`.
-2. Enter the project folder: `cd CAIE_Code`.
-
-3. The executable programs are in `bin/` folder. You may directly run or consider adding `bin/` to your `PATH`.
-
-4. If you want to compile manually:
-  - **macOS**: run `build.sh`
-  - **Windows**: run `build.ps1`
-
-5. If you want to see the manual page from `man` command, you should consider link the manual file `man/cpc.1` to your `MANPATH`.
-
-    > For example(**Linux**): `sudo ln -f ./man/cpc.1 /your/man/path`.
-
-6. If you cannot execute the complied files, please submit the problems on our [issue page](https://github.com/iewnfod/CAIE_Code/issues).
-
-### Update
-* If you followed the instructions and used `git` or PKG to install `cpc`, you can update easily using `cpc -u`.
-
-* An auto-update feature is introduced after `dc0cd71` to automatically detect updates once a week.
-
-* Otherwise, you should manually re-install the whole project.
+Config, REPL history and packages live in `$CPC_HOME` (default `~/.cpc`).
+The installation directory is never written to at runtime.
 
 ## Usage
 
@@ -214,6 +187,29 @@ NEXT i
 ### Computation Tests
 - [generating 100k randoms and shell sorting](test/sort_test.cpc): about 3.5s
 
+
+## Version 0.2 behavior changes
+
+Version 0.2 is specified in [docs/SPEC.md](docs/SPEC.md), which is the
+authoritative description of the language. The main visible changes:
+
+- One statement per line; statements no longer merge across lines.
+- `CASE` branches no longer need a semicolon (a trailing `;` is still accepted).
+- `CALL P` / `PROCEDURE P` / `FUNCTION F RETURNS T` work without `()`.
+- Operator precedence is fixed (`AND` binds tighter than `OR`); comparisons
+  are non-associative; `p.x + p.y` parses correctly.
+- Types are honest: `2.5 + 2.5` is `5.0`, `8 / 2` is `4.0`, REAL does not
+  silently truncate into INTEGER, and INPUT parses by the target's type.
+- BYVAL arrays/records are deep-copied; scoping is lexical (a procedure sees
+  its own names and globals, never the caller's locals).
+- Errors go to stderr with `file:line`, a source excerpt and a caret; the
+  exit code is non-zero on failure. Runtime errors stop the program.
+- `WRITEFILE` writes one line, `READFILE` reads one line, `RANDOM` files
+  honor `SEEK`. Enums, `SUPER` and inheritance work.
+- Nothing updates, installs packages or touches the network on a normal run;
+  `cpc -u` is the explicit updater.
+- The `RANDOM(x)` function alias is gone; use `RAND(x)` (uniform in [0, x)).
+- `SET`/`DEFINE` set types remain unimplemented and now fail cleanly.
 
 ## Standards
 

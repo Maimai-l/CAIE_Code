@@ -1,0 +1,2 @@
+[console_scripts]
+cpc = cpc.main:cli
