@@ -1,6 +1,7 @@
 from .data import *
 from ..AST_Base import *
 from ..global_var import *
+from ..error import CpcError
 
 class Constant(AST_Node):
     def __init__(self, id, value, *args, **kwargs):
@@ -85,16 +86,16 @@ class NewAssign(AST_Node):
     def exe(self):
         assign_item = self.assign_expr.exe()
         target_item = self.target_expr.exe()
-        if target_item is not None:
-            try:
-                if target_item.is_const == False:
-                    target_item.set_value(assign_item[0])
-                else:
-                    add_error_message(f'Cannot assign value to a constant', self)
-            except:
-                add_error_message(f'Cannot assign `{assign_item}` to `{target_item}`', self)
-        else:
-            add_error_message(f'Target item does not exist', self)
+        if target_item is None:
+            add_error_message('assignment target does not exist', self)
+        if getattr(target_item, 'is_const', False):
+            add_error_message('cannot assign a value to a constant', self)
+        try:
+            target_item.set_value(assign_item[0])
+        except CpcError:
+            raise
+        except Exception:
+            add_error_message(f'cannot assign `{assign_item}` to `{target_item}`', self)
 
 class Ids(AST_Node):
     def __init__(self, *args, **kwargs):

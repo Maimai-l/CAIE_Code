@@ -82,9 +82,9 @@ class Stack:
                         if self.spaces[i] == v.current_space:
                             return v
                     else:
-                        add_stack_error_message(f'Private variable `{id}` is not accessible')
+                        add_stack_error_message(f'private variable `{id}` is not accessible')
         else:
-            add_stack_error_message(f'No variable or constant have id: `{id}`')
+            add_stack_error_message(f'no variable or constant named `{id}`')
 
     def new_variable(self, id, type, value=None):
         if value:
@@ -193,8 +193,10 @@ class Stack:
             add_stack_error_message(f'File `{path}` has not opened')
 
     def close_all_files(self):
+        from .error import print_err
         for path, f in self.files.items():
-            add_stack_error_message(f'Program exit before closing file `{path}`')
+            # A warning, not an error: quit() must never raise (SPEC 7.4).
+            print_err(f'warning: program ended before closing file `{path}`')
             f[0].close()
 
     def add_struct(self, id, obj):

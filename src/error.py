@@ -1,45 +1,60 @@
-from .AST_Base import AST_Node
+import sys
 
-class Error:
-    def __init__(self, message, ast_obj):
+
+class CpcError(Exception):
+    """A pseudocode-level runtime error (SPEC 8.3). Stops execution of the program.
+
+    lineno may be None when raised from code that has no AST node at hand; the
+    statement dispatcher fills it in with the current statement's line.
+    """
+
+    def __init__(self, message, lineno=None):
+        super().__init__(message)
         self.message = message
-        self.ast_obj = ast_obj
-        self.final_content = f'\033[1;31mError\033[0m: \033[1m{self.message}\033[0m {self.ast_obj.get_pos()}'
+        self.lineno = lineno
 
-    def raise_err(self):
-        from .global_var import print_
-        print_(self.final_content)
 
-    def __lt__(self, other):
-        return self.ast_obj.get_pos() < other.ast_obj.get_pos()
+class SyntaxIssue:
+    """One collected static error (SPEC 8.2). kind is 'lex', 'parse' or 'eof'."""
 
-    def __eq__(self, other):
-        return self.message == other.message
+    def __init__(self, message, lineno, kind='parse'):
+        self.message = message
+        self.lineno = lineno
+        self.kind = kind
 
-    def __hash__(self):
-        return hash(self.message)
 
-class LexerError(Error):
-    def __init__(self, message, ast_obj):
-        super().__init__(message, ast_obj)
-        self.final_content = f'\033[1;31mLexer Error\033[0m: \033[1m{self.message}\033[0m {self.ast_obj.get_pos()}'
+def _use_color(stream):
+    # SPEC 8.7: color only on a terminal and only when NO_COLOR is unset.
+    import os
+    return stream.isatty() and not os.environ.get('NO_COLOR')
 
-class ParseError(Error):
-    def __init__(self, message, ast_obj):
-        super().__init__(message, ast_obj)
-        self.final_content = f'\033[1;31mParse Error\033[0m: \033[1m{self.message}\033[0m {self.ast_obj.get_pos()}'
 
-class EofError(Error):
-    def __init__(self, ast_obj):
-        super().__init__('', ast_obj)
-        self.final_content = f'\033[1;31mEOF Error\033[0m {self.ast_obj.get_pos()}'
+def _prefix(path, lineno):
+    where = path if path else '<stdin>'
+    return f'{where}:{lineno}: ' if lineno else f'{where}: '
 
-class StackError(Error):
-    def __init__(self, message):
-        super().__init__(message, AST_Node())
-        self.final_content = f'\033[1;31mStack Error\033[0m: \033[1m{self.message}\033[0m'
 
-class PythonError(Error):
-    def __init__(self, e, ast_obj):
-        super().__init__(e, ast_obj)
-        self.final_content = f'\033[1;31mPython Error\033[0m: \033[1m{self.message}\033[0m {self.ast_obj.get_pos()}'
+def format_runtime_error(path, err):
+    label = 'error'
+    if _use_color(sys.stderr):
+        label = '\033[1;31merror\033[0m'
+    return f'{_prefix(path, err.lineno)}{label}: {err.message}'
+
+
+def format_syntax_issue(path, issue):
+    label = 'syntax error'
+    if _use_color(sys.stderr):
+        label = '\033[1;31msyntax error\033[0m'
+    return f'{_prefix(path, issue.lineno)}{label}: {issue.message}'
+
+
+def print_err(text):
+    sys.stderr.write(text + '\n')
+    sys.stderr.flush()
+
+
+def print_internal_error(exc):
+    """SPEC 8.4: interpreter defects are never presented as the user's fault."""
+    import traceback
+    print_err('internal error, please report to the cpc issue tracker:')
+    print_err(''.join(traceback.format_exception(type(exc), exc, exc.__traceback__)).rstrip())

@@ -21,19 +21,19 @@ class Statements(AST_Node):
         return '\n'.join(result)
 
     def exe(self):
-        result = []
+        from ..error import CpcError
         for statement in self.statements:
-            # 如果当前请求返回了，那就直接停止运行这个表达式块
+            # A RETURN executed inside this block stops the whole block.
             if stack.return_request:
                 break
-            # 尝试运行，如果失败，直接定制当前表达式块
             try:
-                result.append(statement.exe())
-            except Exception as e:
-                add_python_error_message(str(e), statement)
-                break
-
-        return result
+                statement.exe()
+            except CpcError as e:
+                # Deep code may raise without position info; the innermost
+                # statement wins, so an already-set lineno is kept.
+                if e.lineno is None and statement.lineno:
+                    e.lineno = statement.lineno
+                raise
 
 class If(AST_Node):
     def __init__(self, condition, true_statement, false_statement=None, *args, **kwargs):
@@ -256,8 +256,7 @@ class While(AST_Node):
 
     def exe(self):
         while self.condition.exe()[0]:
-            self.true_statement.exe()[0]
-            # 检查是否有 return 需要退出
+            self.true_statement.exe()
             if stack.return_request:
                 break
 
