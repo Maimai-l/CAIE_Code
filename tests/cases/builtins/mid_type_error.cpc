@@ -1,0 +1,1 @@
+OUTPUT MID("ABCDEFG", "x", 3)

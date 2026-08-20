@@ -1,0 +1,4 @@
+DECLARE r : REAL
+r <- RAND(5)
+OUTPUT r >= 0
+OUTPUT r < 5

@@ -187,11 +187,9 @@ def p_import_statement(p):
     p[0] = AST.Import(p[2], p=p)
 
 def _is_call(node):
-    if isinstance(node, AST.Call_function) or type(node) in _builtin_classes:
+    if isinstance(node, (AST.Call_function, AST.Builtin)):
         return True
     return (isinstance(node, AST.Composite_type_expression) and _is_call(node.exp2))
-
-_builtin_classes = set(insert_functions.values())
 
 def p_expression_statement(p):
     """simple_statement : expression"""
@@ -356,13 +354,22 @@ def p_subroutine_params(p):
             | empty"""
     p[0] = p[2] if len(p) == 4 else None
 
+def _check_builtin_shadow(name, p):
+    # SPEC 9.1: user subroutines cannot take a built-in's name.
+    if name in insert_functions:
+        add_parse_error_message(
+            f'`{name}` is a built-in function and cannot be redefined',
+            AST_Node(lineno=p.lineno(3), lexpos=p.lexpos(3)))
+
 def p_procedure_statement(p):
     """block_statement : visibility PROCEDURE ID subroutine_params NEWLINE statements NEWLINE ENDPROCEDURE
             | visibility PROCEDURE NEW subroutine_params NEWLINE statements NEWLINE ENDPROCEDURE"""
+    _check_builtin_shadow(p[3], p)
     p[0] = AST.Function(p[3], p[4], p[6], private=p[1], p=p)
 
 def p_function_statement(p):
     """block_statement : visibility FUNCTION ID subroutine_params RETURNS ret_type NEWLINE statements NEWLINE ENDFUNCTION"""
+    _check_builtin_shadow(p[3], p)
     kind, type_name = p[6]
     if kind == 'ARR_OF':
         p[0] = AST.ArrFunction(p[3], p[4], type_name, p[8], private=p[1], p=p)
@@ -493,7 +500,7 @@ def p_postfix(p):
 def _call_node(name, parameters, p):
     """A name used with (): a built-in when registered, else a user call."""
     if name in insert_functions:
-        return insert_functions[name](parameters, p=p)
+        return make_builtin(name, parameters, p=p)
     return AST.Call_function(name, parameters, p=p) if parameters else AST.Call_function(name, p=p)
 
 def p_member_ref(p):
