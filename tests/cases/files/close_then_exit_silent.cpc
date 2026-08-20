@@ -1,0 +1,4 @@
+OPENFILE "t.txt" FOR WRITE
+WRITEFILE "t.txt", "x"
+CLOSEFILE "t.txt"
+EXIT(0)

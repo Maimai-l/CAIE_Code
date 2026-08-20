@@ -1,0 +1,3 @@
+OPENFILE "u.txt" FOR WRITE
+WRITEFILE "u.txt", "x"
+EXIT(0)

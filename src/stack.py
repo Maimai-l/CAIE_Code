@@ -198,42 +198,26 @@ class Stack:
                 add_stack_error_message(f'private function `{id}` is not accessible')
         add_stack_error_message(f'no procedure or function named `{id}`')
 
-    def add_file(self, path, file_obj, seek_addr=0):
-        try:
-            file_obj.seek(0, 2)
-            eof = file_obj.tell()
-        except Exception:
-            eof = ''
-        file_obj.seek(seek_addr)
-        self.files[path] = (file_obj, eof, seek_addr)
-
-    def set_seek(self, path, seek_addr=0):
+    def add_file(self, path, open_file):
         if path in self.files:
-            self.files[path] = (self.files[path][0], self.files[path][1], seek_addr)
-        else:
-            add_stack_error_message(f'file `{path}` is not open')
+            add_stack_error_message(f'file `{path}` is already open')
+        self.files[path] = open_file
 
     def get_file(self, path):
         if path in self.files:
-            return self.files[path][0]
+            return self.files[path]
         add_stack_error_message(f'file `{path}` is not open')
 
-    def get_seek(self, path):
-        if path in self.files:
-            return self.files[path][2]
-        add_stack_error_message(f'file `{path}` is not open')
-
-    def get_eof(self, path):
-        if path in self.files:
-            return self.files[path][1]
-        add_stack_error_message(f'file `{path}` is not open')
+    def forget_file(self, path):
+        self.files.pop(path, None)
 
     def close_all_files(self):
         from .error import print_err
-        for path, f in self.files.items():
-            # A warning, not an error: quit() must never raise (SPEC 7.4).
+        # Only files the program left open warn here (SPEC 7.4).
+        for path, entry in self.files.items():
             print_err(f'warning: program ended before closing file `{path}`')
-            f[0].close()
+            entry.close()
+        self.files.clear()
 
     def add_struct(self, id, obj):
         self.structs[id] = obj

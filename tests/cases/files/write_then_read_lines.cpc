@@ -1,0 +1,11 @@
+OPENFILE "out.txt" FOR WRITE
+WRITEFILE "out.txt", "line1"
+WRITEFILE "out.txt", "line2"
+CLOSEFILE "out.txt"
+DECLARE s : STRING
+OPENFILE "out.txt" FOR READ
+READFILE "out.txt", s
+OUTPUT s
+READFILE "out.txt", s
+OUTPUT s
+CLOSEFILE "out.txt"

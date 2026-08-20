@@ -180,9 +180,7 @@ def _today(node):
 # --- interpreter interface ---------------------------------------------------
 
 def _eof(node, path):
-    f = stack.get_file(path[0])
-    eof = stack.get_eof(path[0])
-    return (f.tell() >= eof, 'BOOLEAN')
+    return (stack.get_file(path[0]).at_eof(), 'BOOLEAN')
 
 def _exit(node, code=None):
     quit(int(code[0]) if code is not None else 0)

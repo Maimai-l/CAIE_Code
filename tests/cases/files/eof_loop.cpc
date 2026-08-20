@@ -1,0 +1,7 @@
+DECLARE s : STRING
+OPENFILE "data.txt" FOR READ
+WHILE NOT EOF("data.txt")
+    READFILE "data.txt", s
+    OUTPUT s
+ENDWHILE
+CLOSEFILE "data.txt"

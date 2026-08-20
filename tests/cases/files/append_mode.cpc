@@ -1,0 +1,13 @@
+OPENFILE "log.txt" FOR WRITE
+WRITEFILE "log.txt", "first"
+CLOSEFILE "log.txt"
+OPENFILE "log.txt" FOR APPEND
+WRITEFILE "log.txt", "second"
+CLOSEFILE "log.txt"
+DECLARE s : STRING
+OPENFILE "log.txt" FOR READ
+READFILE "log.txt", s
+OUTPUT s
+READFILE "log.txt", s
+OUTPUT s
+CLOSEFILE "log.txt"

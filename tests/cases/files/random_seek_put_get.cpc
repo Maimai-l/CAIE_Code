@@ -1,0 +1,8 @@
+OPENFILE "rec.dat" FOR RANDOM
+SEEK "rec.dat", 0
+PUTRECORD "rec.dat", 42
+SEEK "rec.dat", 0
+DECLARE n : INTEGER
+GETRECORD "rec.dat", n
+OUTPUT n
+CLOSEFILE "rec.dat"
