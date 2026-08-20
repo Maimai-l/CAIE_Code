@@ -1,6 +1,7 @@
 from .data import *
 from ..AST_Base import *
 from ..global_var import *
+from .. import values
 from .array import *
 from .data_types import *
 
@@ -34,7 +35,6 @@ class Output_expression(AST_Node):
         self.expressions.append(expression)
 
     def exe(self):
-        from .. import values
         # SPEC 4.9: values are concatenated with no separator.
         return ''.join(values.to_text(i.exe(), i) for i in self.expressions)
 
@@ -80,7 +80,6 @@ class Raw_output(AST_Node):
         return LEVEL_STR * level + self.type + '\n' + self.expression.get_tree(level+1)
 
     def exe(self):
-        from .. import values
         t = self.expression.exe()
         # File mode reaches here only for calls (SPEC 4.10): evaluate, discard.
         if get_running_mod() != 'file':
@@ -98,7 +97,6 @@ class NewInput(AST_Node):
         return LEVEL_STR * level + self.type + ' ' + str(self.id)
 
     def exe(self):
-        from .. import values
         target = self.expr.exe()
         if target is None or isinstance(target, tuple):
             add_error_message('INPUT target must be a variable, array element or field', self)

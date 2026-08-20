@@ -64,6 +64,7 @@ class Stack:
         self.return_variables = None
         self.return_request = False
         self.call_depth = 0  # pseudocode calls currently active (SPEC 5.5)
+        self._visible_cache = None  # invalidated on every push/pop
         home = STRING(HOME_PATH, name='__HOME__')
         home.is_const = True
         self.spaces[0].new_variable('__HOME__', home, True)
@@ -76,6 +77,7 @@ class Stack:
 
     def visible_spaces(self):
         """Lexical visibility (SPEC 5.1). Caller frames are never visible.
+        The result is cached until the space list changes.
 
         Two shapes occur at the top of the space list:
         - plain member access pushes object spaces: they see themselves
@@ -84,6 +86,9 @@ class Stack:
           top of its object space: [frame, object, ...]. The frame sees
           itself, those object spaces, and the global frame.
         """
+        if self._visible_cache is not None:
+            return self._visible_cache
+
         def with_parents(space):
             chain = []
             while space is not None and space not in chain:
@@ -105,6 +110,7 @@ class Stack:
         globe = self.global_space()
         if globe not in visible:
             visible.append(globe)
+        self._visible_cache = visible
         return visible
 
     def _private_accessible(self, owner_space):
@@ -192,9 +198,11 @@ class Stack:
     def pop_space(self):
         self.spaces.pop(0)
         self.return_request = False
+        self._visible_cache = None
 
     def new_space(self, space_name, var_dict, func_dict):
         self.spaces.insert(0, Space(space_name, var_dict, func_dict, kind='frame'))
+        self._visible_cache = None
 
     def set_return_variables(self, variables):
         self.return_variables = variables
@@ -242,6 +250,8 @@ class Stack:
 
     def pop_subspace(self):
         self.spaces.pop(0)
+        self._visible_cache = None
 
     def push_subspace(self, space):
         self.spaces.insert(0, space)
+        self._visible_cache = None

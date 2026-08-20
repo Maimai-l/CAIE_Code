@@ -2,6 +2,7 @@ from .data import *
 from ..AST_Base import *
 from ..global_var import *
 from ..error import CpcError
+from .. import values
 
 class Constant(AST_Node):
     def __init__(self, id, value, *args, **kwargs):
@@ -84,7 +85,6 @@ class NewAssign(AST_Node):
         return LEVEL_STR * level + self.type + '\n' + self.target_expr.get_tree(level+1) + '\n' + self.assign_expr.get_tree(level+1)
 
     def exe(self):
-        from .. import values
         assign_item = self.assign_expr.exe()
         target_item = self.target_expr.exe()
         values.assign_to(target_item, assign_item, self)

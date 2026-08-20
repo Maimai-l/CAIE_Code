@@ -1,9 +1,10 @@
 from .data import *
 from ..AST_Base import *
 from ..global_var import *
+from ..error import CpcError
+from .. import values
 from .array import *
 from os import path as Path
-from os import mkdir
 
 class Statements(AST_Node):
     def __init__(self, *args, **kwargs):
@@ -21,7 +22,6 @@ class Statements(AST_Node):
         return '\n'.join(result)
 
     def exe(self):
-        from ..error import CpcError
         for statement in self.statements:
             # A RETURN executed inside this block stops the whole block.
             if stack.return_request:
@@ -52,7 +52,6 @@ class If(AST_Node):
         return result
 
     def exe(self):
-        from .. import values
         if values.require_boolean(self.condition.exe(), self, 'IF condition'):
             self.true_statement.exe()
         elif self.false_statement:
@@ -195,7 +194,6 @@ class A_case(AST_Node):
         return LEVEL_STR * level + self.type + '\n' + self.condition.get_tree(level+1) + '\n' + self.true_statement.get_tree(level+1)
 
     def check(self, value):
-        from .. import values
         if self.condition.type == 'RANGE':
             low, high = self.condition.bounds()
             return (values.binary('<=', low, value, self)[0]
@@ -229,7 +227,6 @@ class Repeat(AST_Node):
         return LEVEL_STR * level + self.type + '\n' + self.true_statement.get_tree(level+1) + '\n' + self.condition.get_tree(level+1)
 
     def exe(self):
-        from .. import values
         while 1:
             self.true_statement.exe()
             if stack.return_request:
@@ -248,7 +245,6 @@ class While(AST_Node):
         return LEVEL_STR * level + self.type + '\n' + self.condition.get_tree(level+1) + '\n' + self.true_statement.get_tree(level+1)
 
     def exe(self):
-        from .. import values
         while values.require_boolean(self.condition.exe(), self, 'WHILE condition'):
             self.true_statement.exe()
             if stack.return_request:
