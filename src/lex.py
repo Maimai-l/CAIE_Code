@@ -107,8 +107,8 @@ tokens = (
     "NEWLINE",
 ) + tuple(reserved)
 
-# 匹配正则表达式
-t_ASSIGN = r"(<-+)|←"
+# Token regular expressions (SPEC section 1)
+t_ASSIGN = r"<-|←"
 t_PLUS = r"\+"
 t_MINUS = r"\-"
 t_MUL = r"\*"
@@ -131,32 +131,43 @@ t_NOT_EQUAL = r"<>"
 t_POINTER = r"\^"
 t_SEMICOLON = r";"
 t_CONNECT = r"&"
-# 忽视空格
-t_ignore = r" "
+# Space, tab and CR separate tokens (SPEC 1.3); LF is significant.
+t_ignore = " \t\r"
+# Comments run to end of line and are recognized here, so `//` inside a
+# string literal is literal text (SPEC 1.2).
+t_ignore_COMMENT = r"//[^\n]*"
 
-# 规则行为
+# Function rules are tried in definition order; each malformed-literal rule
+# sits directly after the literal it backstops.
 def t_DATE(t):
-    r'[0-9][0-9]\/[0-9][0-9]\/[0-9][0-9][0-9][0-9]'
+    r'[0-9][0-9]/[0-9][0-9]/[0-9][0-9][0-9][0-9](?![0-9])'
     t.value = str(t.value)
     return t
 
 def t_BOOLEAN(t):
-    r'TRUE|FALSE'
-    if t.value == 'TRUE':
-        t.value = True
-    elif t.value == 'FALSE':
-        t.value = False
+    r'TRUE\b|FALSE\b'
+    t.value = (t.value == 'TRUE')
     return t
 
 def t_CHAR(t):
-    r'\'[\s\S]?\''
+    r"'[^'\n]'"
     t.value = str(t.value[1:-1])
     return t
 
+def t_BADCHAR(t):
+    r"'[^'\n]*'?"
+    add_lexer_error_message(
+        'invalid character literal (a CHAR holds exactly one character)',
+        AST_Node(lineno=t.lineno))
+
 def t_STRING(t):
-    r'\"[\s\S]*?\"'
+    r'"[^"\n]*"'
     t.value = str(t.value[1:-1])
     return t
+
+def t_BADSTRING(t):
+    r'"[^"\n]*'
+    add_lexer_error_message('unterminated string literal', AST_Node(lineno=t.lineno))
 
 def t_REAL(t):
     r'\d*\.\d+'
@@ -177,12 +188,12 @@ def t_ID(t):
         t.type = 'ID'
     return t
 
-# 换行
+# Newlines are discarded here until the step-3 grammar makes them
+# statement separators; only the line counter is maintained.
 def t_NEWLINE(t):
     r'\n+'
     t.lexer.lineno += t.value.count('\n')
 
-# 意外处理
 def t_error(t):
-    add_lexer_error_message(f"Keyword not fount `{t.value[0]}`", AST_Node(lineno=t.lineno))
+    add_lexer_error_message(f"unexpected character `{t.value[0]}`", AST_Node(lineno=t.lineno))
     t.lexer.skip(1)

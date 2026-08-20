@@ -43,7 +43,8 @@ class String(AST_Node):
     def __init__(self, value, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.type = 'STRING'
-        self.value = str(value).encode('raw_unicode_escape').decode('unicode_escape')
+        # SPEC 1.7: no escape sequences; a backslash is a literal character.
+        self.value = str(value)
 
     def get_tree(self, level=0):
         return LEVEL_STR * level + self.type + ' ' + '"' + str(self.value) + '"'

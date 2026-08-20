@@ -56,16 +56,6 @@ def wrong_argument(msg):
     quit(2)
 
 
-# Comment handling moves into the lexer in step 2; until then strings
-# containing `//` are still broken (known issue A14).
-def remove_comment(text: str):
-    text = text.split('\n')
-    for i in range(len(text)):
-        text[i] = text[i].split('//')[0].strip()
-
-    return '\n'.join(text).strip()
-
-
 def report_syntax_errors(path):
     if options.get_value('show_error'):
         for issue in global_var.get_syntax_errors()[:20]:
@@ -84,8 +74,8 @@ def preload_scripts():
 
 
 def multi_input():
-    text = remove_comment(input(f'{preline} '))
-    if not text:
+    text = input(f'{preline} ')
+    if not text.strip():
         return ''
     global_var.clear_syntax_errors()
     try:
@@ -97,8 +87,8 @@ def multi_input():
     n = 0
     while global_var.get_syntax_errors() and n < 2:
         global_var.clear_syntax_errors()
-        t = remove_comment(input(f'{multi_preline} '))
-        if not t:
+        t = input(f'{multi_preline} ')
+        if not t.strip():
             n += 1
         else:
             n = 0
@@ -177,8 +167,8 @@ def with_file(path, preload=False):
     with open(path, 'rb') as f:
         encode = detect(f.read())['encoding']
     with open(path, 'r', encoding=encode) as f:
-        text = remove_comment(f.read())
-    if not text:
+        text = f.read()
+    if not text.strip():
         return RUN_OK
 
     return execute_text(text, path, preload=preload)
