@@ -153,7 +153,7 @@ class Class(AST_Node):
                     else:
                         add_stack_error_message(f'Cannot inherit from an unknown class: `{that.inherit_id}`')
                         return
-                    self.space = Space(self.type, {'SELF': (self, False), 'SUPER': (inherit_obj, False)}, {}, kind='object')
+                    self.space = Space(self.type, {'SELF': (self, False), 'SUPER': (inherit_obj, False)}, {}, kind='object', parent=inherit_obj.space)
                 else:
                     self.space = Space(self.type, {'SELF': (self, False)}, {}, kind='object')
                 stack.push_subspace(self.space)
@@ -162,10 +162,23 @@ class Class(AST_Node):
                 finally:
                     stack.pop_subspace()
 
+            def _has_constructor(self):
+                probe = self.space
+                while probe is not None:
+                    if 'NEW' in probe.functions:
+                        return True
+                    probe = probe.parent
+                return False
+
             def load_init(self, param):
                 # Constructor arguments are evaluated in the caller's scope
                 # before the object space is pushed (SPEC 5.1).
                 args = param.exe() if param else []
+                if not self._has_constructor():
+                    if args:
+                        add_stack_error_message(
+                            f'class `{self.type}` has no constructor NEW')
+                    return
                 stack.push_subspace(self.space)
                 try:
                     Call_function('NEW', param).exe(pre_params=args)

@@ -1,0 +1,15 @@
+CLASS Counter
+    PUBLIC Total : INTEGER
+    PUBLIC PROCEDURE NEW(Start : INTEGER)
+        Total <- Start
+    ENDPROCEDURE
+    PUBLIC PROCEDURE Add(Amount : INTEGER)
+        Total <- Total + Amount
+    ENDPROCEDURE
+ENDCLASS
+DECLARE c : Counter
+c <- NEW Counter(10)
+DECLARE localAmount : INTEGER
+localAmount <- 5
+CALL c.Add(localAmount)
+OUTPUT c.Total

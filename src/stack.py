@@ -8,11 +8,14 @@ from .history import HOME_PATH
 #   'frame'  - locals + parameters of one active subroutine call
 #   'object' - the member space of a record/class instance
 class Space:
-    def __init__(self, name: str, variables: dict, functions: dict, kind='frame'):
+    def __init__(self, name: str, variables: dict, functions: dict, kind='frame', parent=None):
         self.name = name
         self.variables = variables
         self.functions = functions
         self.kind = kind
+        # For 'object' spaces of a class with INHERITS: the parent
+        # instance's space, searched after this one (SPEC 6.2).
+        self.parent = parent
 
     def __getitem__(self, index):
         if index == 0:
@@ -81,16 +84,23 @@ class Stack:
           top of its object space: [frame, object, ...]. The frame sees
           itself, those object spaces, and the global frame.
         """
+        def with_parents(space):
+            chain = []
+            while space is not None and space not in chain:
+                chain.append(space)
+                space = space.parent
+            return chain
+
         visible = []
         i = 0
         while i < len(self.spaces) and self.spaces[i].kind == 'object':
-            visible.append(self.spaces[i])
+            visible.extend(with_parents(self.spaces[i]))
             i += 1
         if not visible and i < len(self.spaces) and self.spaces[i].kind == 'frame':
             visible.append(self.spaces[i])
             i += 1
             while i < len(self.spaces) and self.spaces[i].kind == 'object':
-                visible.append(self.spaces[i])
+                visible.extend(with_parents(self.spaces[i]))
                 i += 1
         globe = self.global_space()
         if globe not in visible:
@@ -98,11 +108,19 @@ class Stack:
         return visible
 
     def _private_accessible(self, owner_space):
-        # A private member is reachable from methods of its object (a frame
-        # is on top of the owner's object space) and always at global scope.
+        # A private member is reachable from methods of its object or of a
+        # subclass (SPEC 6.2), and always at global scope.
         if owner_space.kind == 'global':
             return True
-        return self.spaces[0].kind == 'frame' and owner_space in self.spaces
+        if self.spaces[0].kind != 'frame':
+            return False
+        for space in self.spaces:
+            probe = space
+            while probe is not None:
+                if probe is owner_space:
+                    return True
+                probe = getattr(probe, 'parent', None)
+        return False
 
     def get_variable(self, id):
         for space in self.visible_spaces():

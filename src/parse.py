@@ -515,6 +515,12 @@ def p_member_ref(p):
     else:
         p[0] = AST.Array_get(p[1], p[3], p=p)
 
+def p_member_ref_new(p):
+    """member_ref : NEW LEFT_PAREN parameters RIGHT_PAREN
+            | NEW LEFT_PAREN RIGHT_PAREN"""
+    # SUPER.NEW(...) - the constructor is a method named NEW (SPEC 6.2).
+    p[0] = AST.Call_function('NEW', p[3], p=p) if len(p) == 5 else AST.Call_function('NEW', p=p)
+
 def p_indexes(p):
     """indexes : indexes COMMA expression
             | expression"""
@@ -596,6 +602,11 @@ def p_primary_new(p):
 def p_primary_pointer(p):
     """primary : POINTER primary"""
     p[0] = AST.Pointer(p[2], p=p)
+
+def p_primary_super(p):
+    """primary : SUPER"""
+    # SUPER is the parent instance stored in the object space (SPEC 6.2).
+    p[0] = AST.Get('SUPER', p=p)
 
 
 # --- parser construction -----------------------------------------------------

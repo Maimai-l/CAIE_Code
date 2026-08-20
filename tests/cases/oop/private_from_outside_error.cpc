@@ -1,0 +1,9 @@
+CLASS Safe
+    PRIVATE Code : INTEGER
+    PUBLIC PROCEDURE NEW(C : INTEGER)
+        Code <- C
+    ENDPROCEDURE
+ENDCLASS
+DECLARE s : Safe
+s <- NEW Safe(7)
+OUTPUT s.Code
