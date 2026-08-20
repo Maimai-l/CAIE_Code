@@ -141,10 +141,11 @@ a defect of the interpreter itself, never the user's fault.
   below 1e16; STRING/CHAR their characters (no quotes); BOOLEAN `TRUE`/`FALSE`; DATE 4.7;
   ARRAY `[v1, v2, ...]`; enum item name.
 - **4.10 Bare expression statements.** In file mode, a statement consisting of a bare
-  expression whose top operator is a comparison is a static error with the hint
-  "use <- for assignment". Other bare expressions are evaluated and discarded (this keeps
-  `foo()` calls legal). In the interactive session the value is echoed in literal form
-  (strings quoted).
+  expression is legal ONLY when the expression is a call (function call or method call);
+  the result is discarded. Any other bare expression is a static error: "statement has no
+  effect" — with the hint "use <- for assignment" when its top operator is `=`. In the
+  interactive session every bare expression is legal and its value is echoed in literal
+  form (strings quoted).
 
 ---
 
@@ -234,6 +235,16 @@ a defect of the interpreter itself, never the user's fault.
 - **8.11 IMPORT.** Paths resolve relative to the importing file's directory, then the
   package directory. Each file is imported at most once per run; a repeated or circular
   import is a no-op. Imported files share the global frame (documented limitation).
+- **8.12 Installation.** The interpreter is an installable Python package with a `cpc`
+  console command; `pip install` / `pipx install` from a git URL or release archive is
+  the supported path. Running from a git checkout (via the repository's `main.py`)
+  remains supported for development.
+- **8.13 No writes to the installation.** The interpreter MUST NOT write to its own
+  installation directory at runtime (parser caches go to the state directory, 8.9).
+- **8.14 Update under pip.** `cpc update` on a pip-managed installation prints the
+  appropriate `pip install --upgrade` command instead of performing a git update; the
+  git-based updater applies only to git checkouts. Network-using dependencies are
+  optional and only required by `cpc update`.
 
 ---
 

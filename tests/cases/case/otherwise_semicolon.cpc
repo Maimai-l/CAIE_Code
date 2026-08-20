@@ -1,0 +1,6 @@
+DECLARE g : INTEGER
+g <- 9
+CASE OF g
+    1 : OUTPUT "one";
+    OTHERWISE : OUTPUT "other";
+ENDCASE

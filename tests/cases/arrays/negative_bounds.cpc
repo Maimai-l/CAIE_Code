@@ -1,0 +1,5 @@
+DECLARE a : ARRAY[-2:2] OF INTEGER
+a[-2] <- 5
+a[2] <- 6
+OUTPUT a[-2]
+OUTPUT a[2]

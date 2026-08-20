@@ -1,0 +1,3 @@
+DECLARE s : STRING
+s <- "ab" & "cd"
+OUTPUT s

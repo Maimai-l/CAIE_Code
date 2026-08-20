@@ -1,0 +1,7 @@
+DECLARE g : INTEGER
+g <- 2
+CASE OF g
+    1 : OUTPUT "one";
+    2 : OUTPUT "two";
+    3 TO 5 : OUTPUT "several";
+ENDCASE

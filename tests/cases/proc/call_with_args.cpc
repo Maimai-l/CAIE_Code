@@ -1,0 +1,7 @@
+PROCEDURE Greet(Name : STRING, Times : INTEGER)
+    DECLARE i : INTEGER
+    FOR i <- 1 TO Times
+        OUTPUT Name
+    NEXT i
+ENDPROCEDURE
+CALL Greet("hi", 2)

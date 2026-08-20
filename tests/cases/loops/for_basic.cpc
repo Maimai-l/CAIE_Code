@@ -1,0 +1,4 @@
+DECLARE i : INTEGER
+FOR i <- 1 TO 5
+    OUTPUT i
+NEXT i

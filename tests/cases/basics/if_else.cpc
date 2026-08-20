@@ -1,0 +1,12 @@
+DECLARE n : INTEGER
+n <- 7
+IF n > 5 THEN
+    OUTPUT "big"
+ELSE
+    OUTPUT "small"
+ENDIF
+IF n > 10 THEN
+    OUTPUT "huge"
+ELSE
+    OUTPUT "not huge"
+ENDIF

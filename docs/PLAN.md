@@ -33,15 +33,21 @@ only through its public interface (the command line), which is what students use
 
 ```
 tests/
-  run_tests.py              # the runner, stdlib only, ~120 lines
+  run_tests.py              # the runner, stdlib only, ~150 lines
   cases/<area>/<name>.cpc   # program under test
   cases/<area>/<name>.out   # expected stdout  (required; may be empty)
-  cases/<area>/<name>.err   # expected stderr  (optional; default: must be empty)
+  cases/<area>/<name>.err   # expected stderr, exact match (optional)
+  cases/<area>/<name>.err.contains  # expected stderr, one required substring per line
+                            # (optional; at most one of .err / .err.contains; used where
+                            # the message format is expected to improve in a later step)
   cases/<area>/<name>.in    # stdin to feed    (optional; default: empty)
   cases/<area>/<name>.exit  # expected exit code (optional; default 0)
+  cases/<area>/<name>.argv  # custom argv tokens; the token CASE stands for the absolute
+                            # path of the .cpc file (optional; enables CLI-flag tests)
   cases/<area>/<name>.files/  # fixture files copied to the working dir (optional)
   cases/<area>/<name>.repl  # marker: run with no file argument, .cpc becomes stdin
 ```
+When neither `.err` nor `.err.contains` exists, stderr must be empty.
 
 ### 1.2 Runner algorithm (normative)
 
@@ -290,6 +296,27 @@ Each step lists: spec clauses, files, method, tests added, net size budget.
 - Tests: cli/two_files_argv_order, cli/import_repeated_noop, cli/import_cycle_terminates,
   cli/fresh_state_between_files, cli/config_preserves_case, cli/no_files_written_to_cwd.
 - Budget: net −60 (auto-update wiring leaves the hot path).
+
+### Step 11 — Standalone packaging (added after plan approval, at the owner's request)
+- Spec: 8.12–8.14 (added alongside this step). Problem: the interpreter can only run out
+  of a git checkout of the whole project; installation means cloning the repository and
+  putting `bin/` on PATH.
+- Files: `src/` renamed to package `cpc/` (with root `main.py` kept as a thin
+  backward-compatible shim so the existing `bin/` launchers keep working), new
+  `pyproject.toml` with console entry point `cpc`, `README.md` installation section,
+  `.github/workflows/tests.yml` (adds an install-and-run smoke job).
+- Method: standard `pip`/`pipx` installation (`pipx install cpc-interpreter` from a git
+  URL or sdist). Bundled scripts and version metadata become package data. PLY parser
+  tables are never written into the installation directory: the parser is built at start
+  and cached under the state directory (measured; rebuild cost is acceptable if caching
+  proves unnecessary). Network-dependent packages (GitPython, requests) become an
+  optional extra needed only by `cpc update`; `cpc update` detects a pip-managed install
+  and prints the `pip install --upgrade` command instead of using git.
+- Tests: existing suite runs against the shim (unchanged); CI gains one job that does
+  `pip install .` and runs a smoke program via the installed `cpc` command.
+- Budget: net +80 (pyproject + shim + path plumbing), mechanical rename excluded.
+- Placed last: the rename touches every import line, so it lands after all behavioral
+  work is complete and protected by the full suite.
 
 ### Step 10 — Feature completion on the stable core
 Three independent sub-steps, each with its own commit and tests; explicitly last because

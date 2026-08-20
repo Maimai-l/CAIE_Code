@@ -1,0 +1,7 @@
+PROCEDURE Inc(BYREF n : INTEGER)
+    n <- n + 1
+ENDPROCEDURE
+DECLARE x : INTEGER
+x <- 5
+CALL Inc(x)
+OUTPUT x

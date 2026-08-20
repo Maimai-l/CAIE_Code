@@ -1,0 +1,6 @@
+DECLARE n : INTEGER
+n <- 0
+REPEAT
+    n <- n + 1
+    OUTPUT n
+UNTIL n >= 3

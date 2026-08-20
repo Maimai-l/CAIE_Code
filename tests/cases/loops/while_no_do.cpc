@@ -1,0 +1,6 @@
+DECLARE n : INTEGER
+n <- 0
+WHILE n < 2
+    n <- n + 1
+ENDWHILE
+OUTPUT n
