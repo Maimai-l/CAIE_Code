@@ -52,11 +52,11 @@ class If(AST_Node):
         return result
 
     def exe(self):
-        if self.condition.exe()[0]:
+        from .. import values
+        if values.require_boolean(self.condition.exe(), self, 'IF condition'):
             self.true_statement.exe()
-        else:
-            if self.false_statement:
-                self.false_statement.exe()
+        elif self.false_statement:
+            self.false_statement.exe()
 
 class For(AST_Node):
     def __init__(self, id, left, right, step, body_statement, next_id, *args, **kwargs):
@@ -84,6 +84,8 @@ class For(AST_Node):
         right = self.right.exe()
         step = self.step.exe()
         if left[1] == 'INTEGER' and right[1] == 'INTEGER' and step[1] == 'INTEGER':
+            if step[0] == 0:
+                add_error_message('FOR loop STEP must not be zero', self)
             if step[0] < 0:
                 diff = -1
             else:
@@ -108,7 +110,7 @@ class For(AST_Node):
                     break
 
         else:
-            add_error_message(f'Expect `INTEGER` for index and step, but found `{left[1]}`, `{right[1]}` and `{step[1]}`', self)
+            add_error_message(f'FOR loop bounds and STEP must be INTEGER, found `{left[1]}`, `{right[1]}` and `{step[1]}`', self)
 
 class Case(AST_Node):
     def __init__(self, id, cases, *args, **kwargs):
@@ -193,12 +195,12 @@ class A_case(AST_Node):
         return LEVEL_STR * level + self.type + '\n' + self.condition.get_tree(level+1) + '\n' + self.true_statement.get_tree(level+1)
 
     def check(self, value):
+        from .. import values
         if self.condition.type == 'RANGE':
-            r = set(map(lambda x : x[0], self.condition.exe()))
-        else:
-            r = {self.condition.exe()[0]}
-
-        return value[0] in r
+            low, high = self.condition.bounds()
+            return (values.binary('<=', low, value, self)[0]
+                    and values.binary('<=', value, high, self)[0])
+        return values.binary('=', value, self.condition.exe(), self)[0]
 
     def exe(self):
         self.true_statement.exe()
@@ -213,16 +215,8 @@ class Range(AST_Node):
     def get_tree(self, level=0):
         return LEVEL_STR * level + self.type + '\n' + self.start.get_tree(level+1) + '\n' + self.end.get_tree(level+1)
 
-    def exe(self):
-        n1 = self.start.exe()
-        n2 = self.end.exe()
-        if n1[1] == 'INTEGER' and n2[1] == 'INTEGER':
-            l = []
-            for i in range(n1[0], n2[0]+1):
-                l.append((i, 'INTEGER'))
-            return l
-        else:
-            add_error_message(f'Expect `INTEGER` for a range argument, but found `{n1[1]}` and `{n2[1]}`', self)
+    def bounds(self):
+        return self.start.exe(), self.end.exe()
 
 class Repeat(AST_Node):
     def __init__(self, true_statement, condition, *args, **kwargs):
@@ -235,13 +229,12 @@ class Repeat(AST_Node):
         return LEVEL_STR * level + self.type + '\n' + self.true_statement.get_tree(level+1) + '\n' + self.condition.get_tree(level+1)
 
     def exe(self):
+        from .. import values
         while 1:
             self.true_statement.exe()
-            # 检查是否有 return 需要退出
             if stack.return_request:
                 break
-            # 检查是否满足条件需要退出
-            if self.condition.exe()[0]:
+            if values.require_boolean(self.condition.exe(), self, 'UNTIL condition'):
                 break
 
 class While(AST_Node):
@@ -255,7 +248,8 @@ class While(AST_Node):
         return LEVEL_STR * level + self.type + '\n' + self.condition.get_tree(level+1) + '\n' + self.true_statement.get_tree(level+1)
 
     def exe(self):
-        while self.condition.exe()[0]:
+        from .. import values
+        while values.require_boolean(self.condition.exe(), self, 'WHILE condition'):
             self.true_statement.exe()
             if stack.return_request:
                 break

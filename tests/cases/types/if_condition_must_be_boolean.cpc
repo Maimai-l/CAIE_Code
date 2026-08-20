@@ -1,0 +1,3 @@
+IF 5 THEN
+    OUTPUT "yes"
+ENDIF

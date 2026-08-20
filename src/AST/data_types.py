@@ -74,4 +74,6 @@ class Date(AST_Node):
         return LEVEL_STR * level + self.type + ' ' + self.value
 
     def exe(self):
-        return DATE(self.value)
+        from .. import values
+        # SPEC 1.6: a DATE literal must be a valid calendar date.
+        return (values.parse_date(self.value, self), 'DATE')

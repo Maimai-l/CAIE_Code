@@ -1,0 +1,2 @@
+DECLARE a : ARRAY[1:3] OF INTEGER
+a[1.5] <- 9

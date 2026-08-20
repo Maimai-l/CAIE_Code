@@ -1,0 +1,9 @@
+DECLARE i, hit : INTEGER
+hit <- 0
+FOR i <- 1 TO 2000
+    CASE OF i
+        1 TO 100000 : hit <- hit + 1
+        OTHERWISE : PASS
+    ENDCASE
+NEXT i
+OUTPUT hit

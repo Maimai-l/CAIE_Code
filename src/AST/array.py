@@ -70,10 +70,12 @@ class Dimension(AST_Node):
     def exe(self):
         left = self.left.exe()
         right = self.right.exe()
-        if left[1] == 'INTEGER' and right[1] == 'INTEGER':
-            return (left[0], right[0])
-        else:
-            add_error_message(f'Array dimension should be INTEGER, but found {left[0]} and {right[0]}', self)
+        if left[1] != 'INTEGER' or right[1] != 'INTEGER':
+            add_error_message(f'array bounds must be INTEGER, found `{left[1]}` and `{right[1]}`', self)
+        if left[0] > right[0]:
+            # SPEC 4.6: lower bound must not exceed upper bound.
+            add_error_message(f'array lower bound `{left[0]}` exceeds upper bound `{right[0]}`', self)
+        return (left[0], right[0])
 
 class Array_assign(AST_Node):
     def __init__(self, id, indexes, value, *args, **kwargs):
@@ -126,8 +128,11 @@ class Indexes(AST_Node):
         index_list = []
         for index in self.indexes:
             r = index.exe()
-            if r[1] == 'INTEGER':
-                index_list.append(r[0])
+            # SPEC 4.6: every index must be INTEGER; nothing is dropped.
+            if r is None or r[1] != 'INTEGER':
+                found = 'nothing' if r is None else f'`{r[1]}`'
+                add_error_message(f'array index must be INTEGER, found {found}', self)
+            index_list.append(r[0])
         return index_list
 
 class Array_get(AST_Node):
@@ -141,19 +146,20 @@ class Array_get(AST_Node):
         return LEVEL_STR * level + self.type + ' ' + str(self.id) + '\n' + self.indexes.get_tree(level+1)
 
     def get_value(self, arr, index):
+        if index[0] not in arr:
+            left, right = arr.get('left'), arr.get('right')
+            add_error_message(
+                f'array index `{index[0]}` out of bounds `{left}:{right}` for `{self.id}`', self)
         if len(index) == 1:
-            if index[0] in arr.keys():
-                return arr[index[0]][0]
-            else:
-                add_error_message(f'Array index `{index[0]}` out of bounds', self)
-        else:
-            return self.get_value(arr[index[0]][0][0], index[1:])
+            return arr[index[0]][0]
+        return self.get_value(arr[index[0]][0][0], index[1:])
 
     def exe(self):
         indexes = self.indexes.exe()
         arr = stack.get_variable(self.id)[0]
-        value = self.get_value(arr, indexes)
-        return value
+        if not isinstance(arr, dict):
+            add_error_message(f'`{self.id}` is not an array', self)
+        return self.get_value(arr, indexes)
 
 class Array_items(AST_Node):
     def __init__(self, *args, **kwargs):

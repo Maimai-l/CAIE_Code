@@ -218,8 +218,13 @@ class Composite_type_expression(AST_Node):
         return LEVEL_STR * level + self.type + '\n' + self.exp1.get_tree(level+1) + '\n' + self.exp2.get_tree(level+2)
 
     def exe(self):
-        obj = self.exp1.exe()[0]
-        # 判断一下是不是枚举类型
+        left = self.exp1.exe()
+        if left is None:
+            add_error_message('expression has no value (a procedure returns nothing)', self)
+        obj = left[0]
+        if not hasattr(obj, 'is_enum'):
+            add_error_message(f'a `{left[1]}` value has no members', self)
+        # Enum member access returns the item itself.
         if obj.is_enum:
             if self.exp2.id in obj.items:
                 return (self.exp2.id, 'STRING')

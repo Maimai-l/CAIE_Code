@@ -96,9 +96,10 @@ a defect of the interpreter itself, never the user's fault.
   is documented and deterministic.)
 - `&`: both operands STRING or CHAR; result STRING.
 - Comparisons `= <> < <= > >=`: legal operand pairs — both numeric (mixed INTEGER/REAL
-  compares by value); both STRING (code-point order); both CHAR; both DATE (chronological);
-  both BOOLEAN (`=` `<>` only); both the same enum type (declaration order). Result BOOLEAN.
-  Any other pair: runtime error.
+  compares by value); both text (STRING/CHAR in any combination, code-point order — a CHAR
+  compares against a one-character STRING, which exam code does constantly); both DATE
+  (chronological); both BOOLEAN (`=` `<>` only); both the same enum type (declaration
+  order). Result BOOLEAN. Any other pair: runtime error.
 - `AND OR NOT`: BOOLEAN operands only; non-BOOLEAN operand is a runtime error. `AND` and `OR`
   MUST short-circuit left to right.
 - **3.3 No implicit conversions** anywhere except INTEGER→REAL widening inside the numeric

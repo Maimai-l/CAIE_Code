@@ -509,7 +509,7 @@ class Day(AST_Node):
             if len(parameters) == 1:
                 p = parameters[0]
                 if p[1] == 'DATE':
-                    return (int(p[0].split('/')[0]), 'INTEGER')
+                    return (p[0].day, 'INTEGER')
                 else:
                     _wrong_param_type("DAY", ['DATE'], [p[1]], self)
             else:
@@ -532,7 +532,7 @@ class Month(AST_Node):
             if len(parameters) == 1:
                 p = parameters[0]
                 if p[1] == 'DATE':
-                    return (int(p[0].split('/')[1]), 'INTEGER')
+                    return (p[0].month, 'INTEGER')
                 else:
                     _wrong_param_type("MONTH", ['DATE'], [p[1]], self)
             else:
@@ -555,7 +555,7 @@ class Year(AST_Node):
             if len(parameters) == 1:
                 p = parameters[0]
                 if p[1] == 'DATE':
-                    return (int(p[0].split('/')[2]), 'INTEGER')
+                    return (p[0].year, 'INTEGER')
                 else:
                     _wrong_param_type("YEAR", ['DATE'], [p[1]], self)
             else:
@@ -578,8 +578,7 @@ class DayIndex(AST_Node):
             if len(parameters) == 1:
                 p = parameters[0]
                 if p[1] == 'DATE':
-                    from datetime import datetime
-                    return (datetime.strptime(p[0], '%d/%m/%Y').weekday() + 1) % 7 + 1
+                    return ((p[0].weekday() + 1) % 7 + 1, 'INTEGER')
                 else:
                     _wrong_param_type("DAYINDEX", ['DATE'], [p[1]], self)
             else:
@@ -600,11 +599,12 @@ class SetDate(AST_Node):
         if self.parameters:
             parameters = self.parameters.exe()
             if len(self.parameters) == 3:
-                p = parameters[0]
-                if p[1] == 'INTEGER':
-                    return (f'{parameters[0][0]:02}/{parameters[1][0]:02}/{parameters[2][0]:04}', 'DATE')
+                from .. import values
+                types = [q[1] for q in parameters]
+                if types == ['INTEGER', 'INTEGER', 'INTEGER']:
+                    return (values.make_date(parameters[0][0], parameters[1][0], parameters[2][0], self), 'DATE')
                 else:
-                    _wrong_param_type("SETDATE", ['INTEGER', 'INTEGER', 'INTEGER'], [p[1]], self)
+                    _wrong_param_type("SETDATE", ['INTEGER', 'INTEGER', 'INTEGER'], types, self)
             else:
                 _wrong_param_number("SETDATE", 3, len(parameters), self)
         else:
@@ -614,14 +614,15 @@ class Today(AST_Node):
     def __init__(self, parameters, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.type = 'TODAY'
+        self.parameters = parameters
 
     def get_tree(self, level=0):
         return LEVEL_STR * level + self.type
 
     def exe(self):
         if not self.parameters:
-            from datetime import datetime
-            return (datetime.now().strftime('%d/%m/%Y'), 'DATE')
+            import datetime
+            return (datetime.date.today(), 'DATE')
         else:
             parameters = self.parameters.exe()
             _wrong_param_number("TODAY", 0, len(parameters), self)

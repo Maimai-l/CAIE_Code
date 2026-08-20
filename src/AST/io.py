@@ -34,18 +34,9 @@ class Output_expression(AST_Node):
         self.expressions.append(expression)
 
     def exe(self):
-        result = []
-        for i in self.expressions:
-            t = i.exe()
-            if t == None:
-                continue
-            if t[1] == 'ARRAY':
-                result.append(str(t))
-            elif t[1] == 'BOOLEAN':
-                result.append({True: 'TRUE', False: 'FALSE'}[t[0]])
-            else:
-                result.append(str(t[0]))
-        return ' '.join(result)
+        from .. import values
+        # SPEC 4.9: values are concatenated with no separator.
+        return ''.join(values.to_text(i.exe(), i) for i in self.expressions)
 
 # class Input(AST_Node):
 #     def __init__(self, id, *args, **kwargs):
@@ -88,28 +79,14 @@ class Raw_output(AST_Node):
     def get_tree(self, level=0):
         return LEVEL_STR * level + self.type + '\n' + self.expression.get_tree(level+1)
 
-    def _output(self, v):
-        # 如果当前是文件模式，那么就应该输出此方法的结果
-        if get_running_mod() == 'file': need_output = False
-        else: need_output = True
-
-        if need_output: print_(v)
-
     def exe(self):
+        from .. import values
         t = self.expression.exe()
-        v = t[0] if type(t) == tuple else str(t)
-        # 如果是 tuple，那就看类型，并输出
-        if type(t) == tuple:
-            if t[1] == 'STRING':
-                self._output('"' + v + '"')
-            elif t[1] == 'CHAR':
-                self._output("'" + v + "'")
-            elif t[1] == 'BOOLEAN':
-                self._output({True: 'TRUE', False: 'FALSE'}[v])
-            else:
-                self._output(v)
-        else:
-            self._output(v)
+        # File mode reaches here only for calls (SPEC 4.10): evaluate, discard.
+        if get_running_mod() != 'file':
+            text = values.echo_text(t)
+            if text is not None:
+                print_(text)
 
 class NewInput(AST_Node):
     def __init__(self, expr, *args, **kwargs):
@@ -121,9 +98,10 @@ class NewInput(AST_Node):
         return LEVEL_STR * level + self.type + ' ' + str(self.id)
 
     def exe(self):
-        expr = self.expr.exe()
-        try:
-            data = input_()
-            expr.set_value(data)
-        except:
-            add_error_message(f'Cannot assign `{data}` to `{expr}`', self)
+        from .. import values
+        target = self.expr.exe()
+        if target is None or isinstance(target, tuple):
+            add_error_message('INPUT target must be a variable, array element or field', self)
+        data = input_()
+        # SPEC 4.5: parse the line by the target's declared type.
+        target.set_value(values.parse_input(target[1], data, self))

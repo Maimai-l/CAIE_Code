@@ -61,10 +61,12 @@ class Read_file(AST_Node):
         f = stack.get_file(file_path[0])
         data = f.readline().strip()
         target = self.target.exe()
-        try:
-            target.set_value(data)
-        except AttributeError:
+        if isinstance(target, tuple) or target is None:
             add_error_message('READFILE target must be a variable', self)
+        if target[1] != 'STRING':
+            # SPEC 7.2: lines are text; parse them explicitly afterwards.
+            add_error_message(f'READFILE target must be STRING, found `{target[1]}`', self)
+        target.set_value(data)
 
 class Write_file(AST_Node):
     def __init__(self, file_path, value, *args, **kwargs):

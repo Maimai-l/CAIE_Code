@@ -84,18 +84,10 @@ class NewAssign(AST_Node):
         return LEVEL_STR * level + self.type + '\n' + self.target_expr.get_tree(level+1) + '\n' + self.assign_expr.get_tree(level+1)
 
     def exe(self):
+        from .. import values
         assign_item = self.assign_expr.exe()
         target_item = self.target_expr.exe()
-        if target_item is None:
-            add_error_message('assignment target does not exist', self)
-        if getattr(target_item, 'is_const', False):
-            add_error_message('cannot assign a value to a constant', self)
-        try:
-            target_item.set_value(assign_item[0])
-        except CpcError:
-            raise
-        except Exception:
-            add_error_message(f'cannot assign `{assign_item}` to `{target_item}`', self)
+        values.assign_to(target_item, assign_item, self)
 
 class Ids(AST_Node):
     def __init__(self, *args, **kwargs):

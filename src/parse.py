@@ -199,7 +199,7 @@ def p_expression_statement(p):
     # interactive session everything is legal and echoed.
     node = p[1]
     if get_running_mod() == 'file' and not _is_call(node):
-        if isinstance(node, AST.Cmp_equal):
+        if isinstance(node, AST.BinOp) and node.op == '=':
             msg = 'statement has no effect (use <- for assignment)'
         else:
             msg = 'statement has no effect'
@@ -453,16 +453,12 @@ def p_binary_expression(p):
             | expression N_DIV expression
             | expression MOD expression
             | expression DIV expression"""
-    node_class = {
-        'OR': AST.Logic_or, 'AND': AST.Logic_and,
-        '=': AST.Cmp_equal, '<>': AST.Cmp_not_equal,
-        '<': AST.Cmp_less, '>': AST.Cmp_greater,
-        '<=': AST.Cmp_less_equal, '>=': AST.Cmp_greater_equal,
-        '&': AST.Op_connect, '+': AST.Op_plus, '-': AST.Op_minus,
-        '*': AST.Op_mul, '/': AST.Op_div,
-        'MOD': AST.Op_mod, 'DIV': AST.Op_exact_div,
-    }[p[2]]
-    p[0] = node_class(p[1], p[3], p=p)
+    if p[2] == 'OR':
+        p[0] = AST.Logic_or(p[1], p[3], p=p)
+    elif p[2] == 'AND':
+        p[0] = AST.Logic_and(p[1], p[3], p=p)
+    else:
+        p[0] = AST.BinOp(p[2], p[1], p[3], p=p)
 
 def p_not_expression(p):
     """expression : NOT expression"""
@@ -470,11 +466,11 @@ def p_not_expression(p):
 
 def p_uminus_expression(p):
     """expression : MINUS expression %prec UMINUS"""
-    p[0] = AST.Op_minus(AST.Integer(0, p=p), p[2], p=p)
+    p[0] = AST.BinOp('-', AST.Integer(0, p=p), p[2], p=p)
 
 def p_uplus_expression(p):
     """expression : PLUS expression %prec UPLUS"""
-    p[0] = AST.Op_plus(AST.Integer(0, p=p), p[2], p=p)
+    p[0] = AST.BinOp('+', AST.Integer(0, p=p), p[2], p=p)
 
 def p_expression_postfix(p):
     """expression : postfix"""

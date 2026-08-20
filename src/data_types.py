@@ -1,3 +1,13 @@
+"""Storage wrappers for variables. A wrapper holds a python value plus its
+cpc type name and exposes the runtime pair protocol ([0] -> value,
+[1] -> type name). Conversion/compatibility rules live in src/values.py;
+set_value here stores what it is given (the assignment path has already
+validated it), keeping declaration defaults per SPEC 4.1."""
+import datetime
+
+from . import values
+
+
 class base:
     def __init__(self, name=None):
         self.name = name
@@ -16,20 +26,22 @@ class base:
         else:
             return self.value
 
+    def set_value(self, new_value):
+        self.value = new_value
+
+
 class INTEGER(base):
     def __init__(self, value=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.value = int(value)
         self.type = 'INTEGER'
 
-    def set_value(self, new_value):
-        self.value = int(new_value)
-
     def __bool__(self):
         return bool(self.value)
 
+
 class REAL(base):
-    def __init__(self, value=.0, *args, **kwargs):
+    def __init__(self, value=0.0, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.value = float(value)
         self.type = 'REAL'
@@ -37,124 +49,117 @@ class REAL(base):
     def set_value(self, new_value):
         self.value = float(new_value)
 
+
 class STRING(base):
     def __init__(self, value='', *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.value = str(value)
         self.type = 'STRING'
 
-    def set_value(self, new_value):
-        self.value = str(new_value)
-
     def __str__(self):
         return '"' + self.value + '"'
+
 
 class CHAR(base):
     def __init__(self, value='', *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.set_value(value)
+        self.value = str(value)
         self.type = 'CHAR'
-
-    def set_value(self, new_value):
-        if new_value == '':
-            self.value = ''
-        else:
-            self.value = str(new_value)[0]
 
     def __str__(self):
         return "'" + self.value + "'"
 
+
 class BOOLEAN(base):
     def __init__(self, value=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if value == 'FALSE':
-            self.value = False
-        elif value == 'TRUE':
-            self.value = True
-        else:
-            self.value = bool(value)
+        self.value = bool(value)
         self.type = 'BOOLEAN'
 
-    def __str__(self) -> str:
-        return {True: 'TRUE', False: 'FALSE'}[self.value]
+    def __str__(self):
+        return 'TRUE' if self.value else 'FALSE'
 
-    def set_value(self, new_value):
-        self.value = bool(new_value)
 
-import time
 class DATE(base):
-    def __init__(self, value=time.strftime("%d/%m/%Y", time.localtime()), *args, **kwargs):
+    def __init__(self, value=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.day, self.month, self.year = value.split('/')
+        # SPEC 4.1: the default is the current date, taken at declaration time.
+        if value is None:
+            self.value = datetime.date.today()
+        elif isinstance(value, datetime.date):
+            self.value = value
+        else:
+            self.value = values.parse_date(value)
         self.type = 'DATE'
 
-    def __str__(self):
-        return f'{self.day}/{self.month}/{self.year}'
-
-    def __getitem__(self, key):
-        if key == 1:
-            return self.type
-        else:
-            return str(self)
-
     def set_value(self, new_value):
-        self.day, self.month, self.year = str(new_value).split('/')
+        if isinstance(new_value, datetime.date):
+            self.value = new_value
+        else:
+            self.value = values.parse_date(new_value)
+
+    def __str__(self):
+        return values.date_text(self.value)
+
 
 class ARRAY(base):
-    def __init__(self, value={}, *args, **kwargs):
+    def __init__(self, value=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.value = value
+        self.value = {} if value is None else value
         self.type = 'ARRAY'
 
-    def get_str(self, v):
-        if v[1] == 'ARRAY':
-            l = []
-            for key, val in v[0][0].items():
-                if key == 'left' or key == 'right': continue
-                l.append(self.get_str(val))
-            return '[' + ', '.join(l) + ']'
-        else:
-            return str(v[0])
-
-    def __str__(self) -> str:
-        l = []
-        for key, val in self.value.items():
-            if key == 'left' or key == 'right': continue
-            l.append(self.get_str(val))
-        return '[' + ', '.join(l) + ']'
+    def __str__(self):
+        return values.array_text(self.value)
 
     def __len__(self):
-        return len(self.value) - 2  # 减掉left和right
+        return len(self.value) - 2  # minus the 'left'/'right' bound entries
 
-    def set_value(self, value):
-        from .global_var import add_stack_error_message
-        if value['left'] == self.value['left'] and value['right'] == self.value['right']:
-            self.value = value
-            # self.to_target(list(value.items())[0][1][1])
-        else:
-            s_left = self.value['left']
-            s_right = self.value['right']
-            left = value['left']
-            right = value['right']
-            add_stack_error_message(f'Cannot assign an array with size `{left}:{right}` to an array with size `{s_left}:{s_right}`')
+    def _is_one_dimensional(self, d):
+        return all(entry[1] != 'ARRAY' for key, entry in d.items()
+                   if key not in ('left', 'right'))
+
+    def set_value(self, new):
+        from .error import CpcError
+        if isinstance(new, ARRAY):
+            new = new.value
+        if not isinstance(new, dict):
+            raise CpcError('cannot assign a non-array value to an array')
+        if new.get('left') == self.value.get('left') and new.get('right') == self.value.get('right'):
+            self.value = new
+            return
+        # SPEC 4.6: a one-dimensional array (e.g. a literal, always 1-based)
+        # fills a one-dimensional target of equal element count from the
+        # target's lower bound.
+        if self._is_one_dimensional(new) and self._is_one_dimensional(self.value):
+            source = [entry for key, entry in new.items() if key not in ('left', 'right')]
+            left, right = self.value['left'], self.value['right']
+            if len(source) == right - left + 1:
+                for offset, entry in enumerate(source):
+                    slot = self.value[left + offset]
+                    # entry[0] is a storage wrapper exposing (value, type).
+                    slot[0].set_value(values.check_assign(slot[1], entry[0]))
+                return
+        s_left, s_right = self.value.get('left'), self.value.get('right')
+        raise CpcError(
+            f"cannot assign an array with bounds `{new.get('left')}:{new.get('right')}`"
+            f" to an array with bounds `{s_left}:{s_right}`")
 
     def to_target(self, target, v=None):
         from .AST.data import stack
-        from .global_var import add_stack_error_message
-        if v == None:
+        from .error import CpcError
+        if v is None:
             v = self.value
         for i in v.keys():
-            if i == "left" or i == "right":
+            if i in ('left', 'right'):
                 continue
             if v[i][1] == 'ARRAY':
-                self.to_target(target, v[i])
-            else:
-                # 如果不是目标类型，则需要转换
-                if v[i][1] != target:
-                    try:
-                        v[i] = stack.structs[target](v[i][0])
-                    except:
-                        add_stack_error_message(f'Cannot change value `{str(v[i][0])}` into `{target}`')
+                self.to_target(target, v[i][0].value if isinstance(v[i][0], ARRAY) else v[i][0])
+            elif v[i][1] != target:
+                try:
+                    v[i] = (stack.structs[target](v[i][0]), target)
+                except Exception:
+                    raise CpcError(f'cannot convert `{v[i][0]}` into `{target}`')
+
 
 class POINTER(base):
     def __init__(self, value=None, *args, **kwargs):
@@ -162,17 +167,12 @@ class POINTER(base):
         self.value = value
         self.type = 'POINTER'
 
-    def set_value(self, value):
-        self.value = value
-
     def solve_value(self):
         return self.value
+
 
 class ANY(base):
     def __init__(self, value=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.value = value
         self.type = 'ANY'
-
-    def set_value(self, value):
-        self.value = value
