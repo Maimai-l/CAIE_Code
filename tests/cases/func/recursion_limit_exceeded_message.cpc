@@ -1,0 +1,4 @@
+FUNCTION Forever(n : INTEGER) RETURNS INTEGER
+    RETURN Forever(n + 1)
+ENDFUNCTION
+OUTPUT Forever(1)

@@ -112,6 +112,10 @@ class Call_function(AST_Node):
                     e.lineno = self.lineno or None
                 raise
 
+        limit = config.get_config('rl')
+        if stack.call_depth >= limit:
+            # SPEC 5.5: counted in pseudocode calls, reported cleanly.
+            add_error_message(f'recursion limit ({limit}) exceeded', self)
         stack.new_space(self.id, new_dict, {})
         stack.call_depth += 1
         try:

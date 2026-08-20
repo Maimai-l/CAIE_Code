@@ -136,6 +136,12 @@ def execute_text(text, path, preload=False):
         return RUN_ERROR
     except (SystemExit, KeyboardInterrupt):
         raise
+    except RecursionError:
+        # Deep expression nesting can exhaust Python's stack before the
+        # pseudocode call limit is reached; still report it cleanly.
+        if options.get_value('show_error'):
+            print_err(format_runtime_error(path, CpcError('the program nests too deeply for the interpreter')))
+        return RUN_ERROR
     except Exception as e:
         print_internal_error(e)
         return RUN_INTERNAL

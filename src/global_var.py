@@ -15,11 +15,18 @@ std_out = sys.stdout
 syntax_errors = []
 
 
+# Python stack frames consumed per pseudocode call. Measured 5 for a plain
+# call chain (frame counting via PYTHON(), 2026-08); doubled with margin for
+# expression-heavy bodies, which hold extra evaluation frames while calling.
+PY_FRAMES_PER_CALL = 12
+
+
 def __init__():
     global running_mod
     running_mod = 'file'
     console.preloop()
-    sys.setrecursionlimit(config.get_config('rl'))
+    # 'rl' counts PSEUDOCODE calls (SPEC 5.5); scale it to Python's limit.
+    sys.setrecursionlimit(config.get_config('rl') * PY_FRAMES_PER_CALL + 300)
 
 
 def set_std_in(new_in):

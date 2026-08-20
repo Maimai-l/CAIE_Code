@@ -1,0 +1,8 @@
+FUNCTION Sum(n : INTEGER) RETURNS INTEGER
+    IF n <= 0 THEN
+        RETURN 0
+    ELSE
+        RETURN n + Sum(n - 1)
+    ENDIF
+ENDFUNCTION
+OUTPUT Sum(999)
