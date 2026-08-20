@@ -22,11 +22,13 @@ def get_value(value):
     return options_dict[value]
 
 def standard_output():
-    print(f'CAIE Pseudocode Interpreter v{VERSION} ({get_current_branch()}/{get_commit_hash_msg()[0]})')
-    print(f'Using {PLATFORM}')
-    print('Repository at \033[4mhttps://github.com/iewnfod/CAIE_Code/\33[0m')
-    print(f'Copyright (c) 2025 Iewnfod. ')
-    print('All Rights Reserved. ')
+    import sys
+    # The banner is a diagnostic, not program output (SPEC 8.1).
+    print(f'CAIE Pseudocode Interpreter v{VERSION} ({get_current_branch()}/{get_commit_hash_msg()[0]})', file=sys.stderr)
+    print(f'Using {PLATFORM}', file=sys.stderr)
+    print('Repository at \033[4mhttps://github.com/iewnfod/CAIE_Code/\33[0m', file=sys.stderr)
+    print('Copyright (c) 2025 Iewnfod. ', file=sys.stderr)
+    print('All Rights Reserved. ', file=sys.stderr)
 
 def open_parse_info():
     options_dict['show_parse'] = True

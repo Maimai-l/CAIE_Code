@@ -61,8 +61,6 @@ reserved = {
     "PASS",
     "IMPORT",
     "SUPER",
-    "SET",
-    "DEFINE",
     "_OUTPUT",
 }
 
@@ -158,7 +156,7 @@ def t_BADCHAR(t):
     r"'[^'\n]*'?"
     add_lexer_error_message(
         'invalid character literal (a CHAR holds exactly one character)',
-        AST_Node(lineno=t.lineno))
+        AST_Node(lineno=t.lineno, lexpos=t.lexpos))
 
 def t_STRING(t):
     r'"[^"\n]*"'
@@ -167,7 +165,7 @@ def t_STRING(t):
 
 def t_BADSTRING(t):
     r'"[^"\n]*'
-    add_lexer_error_message('unterminated string literal', AST_Node(lineno=t.lineno))
+    add_lexer_error_message('unterminated string literal', AST_Node(lineno=t.lineno, lexpos=t.lexpos))
 
 def t_REAL(t):
     r'\d*\.\d+'
@@ -188,12 +186,14 @@ def t_ID(t):
         t.type = 'ID'
     return t
 
-# Newlines are discarded here until the step-3 grammar makes them
-# statement separators; only the line counter is maintained.
+# A run of newlines is ONE separator token (SPEC 2.1). The pattern also
+# swallows blank and comment-only lines so they cannot split the separator
+# into two tokens.
 def t_NEWLINE(t):
-    r'\n+'
+    r'(\n[ \t\r]*(//[^\n]*)?)+'
     t.lexer.lineno += t.value.count('\n')
+    return t
 
 def t_error(t):
-    add_lexer_error_message(f"unexpected character `{t.value[0]}`", AST_Node(lineno=t.lineno))
+    add_lexer_error_message(f"unexpected character `{t.value[0]}`", AST_Node(lineno=t.lineno, lexpos=t.lexpos))
     t.lexer.skip(1)

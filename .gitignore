@@ -12,3 +12,5 @@ temp/
 *.log
 .cpc_config.json
 *.nupkg
+parser.out
+parsetab.py

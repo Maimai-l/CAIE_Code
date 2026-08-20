@@ -10,9 +10,10 @@ PROCEDURE Sort(BYREF arr : ARRAY, BYVAL left : INTEGER, right : INTEGER)
     ENDWHILE
 
     WHILE gap > 0 DO
+        DECLARE temp : REAL
+        DECLARE j : INTEGER
         FOR i <- gap TO len
-            CONSTANT temp = arr[i]
-            DECLARE j : INTEGER
+            temp <- arr[i]
             j <- i - gap
             WHILE j >= left AND arr[j] > temp
                 arr[j+gap] <- arr[j]

@@ -2,7 +2,6 @@
 from src.requirements import test_requirements
 test_requirements()
 
-from ply import yacc
 from ply import lex
 from chardet import detect
 import signal
@@ -56,10 +55,10 @@ def wrong_argument(msg):
     quit(2)
 
 
-def report_syntax_errors(path):
+def report_syntax_errors(path, source=None):
     if options.get_value('show_error'):
         for issue in global_var.get_syntax_errors()[:20]:
-            print_err(format_syntax_issue(path, issue))
+            print_err(format_syntax_issue(path, issue, source))
     global_var.clear_syntax_errors()
 
 
@@ -73,32 +72,31 @@ def preload_scripts():
                 with_file(path, True)
 
 
+def _read_line(prompt_text):
+    # SPEC 8.6: prompts appear only on a terminal.
+    if sys.stdin.isatty():
+        return input(prompt_text)
+    return input()
+
+
 def multi_input():
-    text = input(f'{preline} ')
+    text = _read_line(f'{preline} ')
     if not text.strip():
         return ''
-    global_var.clear_syntax_errors()
-    try:
-        parser.parse(text, tracking=True)
-    except Exception:
-        pass
-    # Until the step-3 grammar can tell "incomplete" from "wrong", an erroneous
-    # line is detected by two consecutive empty continuation lines.
-    n = 0
-    while global_var.get_syntax_errors() and n < 2:
+    while True:
         global_var.clear_syntax_errors()
-        t = input(f'{multi_preline} ')
-        if not t.strip():
-            n += 1
-        else:
-            n = 0
-        text += '\n' + t
         try:
             parser.parse(text, tracking=True)
         except Exception:
             pass
-
-    return text
+        issues = global_var.get_syntax_errors()
+        # Only "the input ended mid-construct" asks for a continuation line;
+        # a complete-but-invalid line is reported at once (SPEC 8.6).
+        if issues and all(i.kind == 'eof' for i in issues):
+            text += '\n' + _read_line(f'{multi_preline} ')
+            continue
+        global_var.clear_syntax_errors()
+        return text
 
 
 def run_AST(ast, preload=False):
@@ -125,7 +123,7 @@ def execute_text(text, path, preload=False):
         return RUN_INTERNAL
 
     if global_var.get_syntax_errors():
-        report_syntax_errors(path)
+        report_syntax_errors(path, text)
         return RUN_ERROR
     if ast is None:
         return RUN_OK
@@ -148,7 +146,8 @@ def execute_text(text, path, preload=False):
 def with_line():
     global_var.set_running_mod('line')
     global_var.set_running_path('')
-    options.standard_output()
+    if sys.stdin.isatty():
+        options.standard_output()
     while 1:
         text = multi_input()
         lexer.lineno = 1
@@ -227,7 +226,7 @@ def main(input_=None, output_=None, addition_file_name=None):
 global_var.__init__()
 
 lexer = lex.lex()
-parser = yacc.yacc()
+parser = build_parser()
 
 if __name__ == '__main__':
     try:

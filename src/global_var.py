@@ -61,7 +61,8 @@ def add_python_error_message(msg, obj):
 # --- static errors: collected, reported before execution (SPEC 8.2) ---
 
 def add_parse_error_message(msg, obj):
-    syntax_errors.append(SyntaxIssue(msg, getattr(obj, 'lineno', None), 'parse'))
+    syntax_errors.append(SyntaxIssue(
+        msg, getattr(obj, 'lineno', None), 'parse', getattr(obj, 'lexpos', None)))
 
 
 def add_eof_error_message(obj):
@@ -69,7 +70,8 @@ def add_eof_error_message(obj):
 
 
 def add_lexer_error_message(msg, obj):
-    syntax_errors.append(SyntaxIssue(msg, getattr(obj, 'lineno', None), 'lex'))
+    syntax_errors.append(SyntaxIssue(
+        msg, getattr(obj, 'lineno', None), 'lex', getattr(obj, 'lexpos', None)))
 
 
 def get_syntax_errors():

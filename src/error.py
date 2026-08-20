@@ -15,12 +15,17 @@ class CpcError(Exception):
 
 
 class SyntaxIssue:
-    """One collected static error (SPEC 8.2). kind is 'lex', 'parse' or 'eof'."""
+    """One collected static error (SPEC 8.2). kind is 'lex', 'parse' or 'eof'.
 
-    def __init__(self, message, lineno, kind='parse'):
+    'eof' means the input ended in the middle of a construct — the interactive
+    session uses this to ask for a continuation line instead of reporting.
+    """
+
+    def __init__(self, message, lineno, kind='parse', lexpos=None):
         self.message = message
         self.lineno = lineno
         self.kind = kind
+        self.lexpos = lexpos
 
 
 def _use_color(stream):
@@ -41,11 +46,21 @@ def format_runtime_error(path, err):
     return f'{_prefix(path, err.lineno)}{label}: {err.message}'
 
 
-def format_syntax_issue(path, issue):
+def format_syntax_issue(path, issue, source=None):
     label = 'syntax error'
     if _use_color(sys.stderr):
         label = '\033[1;31msyntax error\033[0m'
-    return f'{_prefix(path, issue.lineno)}{label}: {issue.message}'
+    parts = [f'{_prefix(path, issue.lineno)}{label}: {issue.message}']
+    # SPEC 8.2: show the offending source line with a caret marker.
+    if source is not None and issue.lineno and issue.lexpos is not None:
+        lines = source.split('\n')
+        if 0 < issue.lineno <= len(lines):
+            line = lines[issue.lineno - 1]
+            line_start = sum(len(l) + 1 for l in lines[:issue.lineno - 1])
+            col = max(0, min(issue.lexpos - line_start, len(line)))
+            parts.append('    ' + line)
+            parts.append('    ' + ' ' * col + '^')
+    return '\n'.join(parts)
 
 
 def print_err(text):

@@ -1,0 +1,9 @@
+TYPE Point
+    DECLARE x : INTEGER
+    DECLARE y : INTEGER
+ENDTYPE
+DECLARE p : Point
+p.x <- 3
+p.y <- 4
+OUTPUT p.x + p.y
+OUTPUT p.x * 2

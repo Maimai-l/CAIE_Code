@@ -1,0 +1,7 @@
+DECLARE g : INTEGER
+g <- 4
+CASE OF g
+    1 : OUTPUT "one"
+    2 TO 5 : OUTPUT "several"
+    OTHERWISE : OUTPUT "other"
+ENDCASE

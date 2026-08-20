@@ -143,11 +143,29 @@ def collect_cases(filter_text):
     return sorted(result)
 
 
+def grammar_gate():
+    """SPEC 2.5: the grammar must build with zero conflicts."""
+    proc = subprocess.run(
+        [sys.executable, '-c',
+         'import sys; sys.path.insert(0, sys.argv[1]); '
+         'from src.parse import build_parser; build_parser(strict=True)',
+         REPO],
+        capture_output=True, text=True)
+    if proc.returncode != 0:
+        print('FAIL grammar gate: parser does not build cleanly')
+        print(proc.stderr.strip())
+        return False
+    print('PASS grammar gate (zero conflicts)')
+    return True
+
+
 def main():
     filter_text = ''
     args = sys.argv[1:]
     if args and args[0] == '--filter' and len(args) > 1:
         filter_text = args[1]
+    if not grammar_gate():
+        return 1
     cases = collect_cases(filter_text)
     if not cases:
         print('no test cases found')

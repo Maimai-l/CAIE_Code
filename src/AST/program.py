@@ -263,7 +263,7 @@ class While(AST_Node):
 class Pass(AST_Node):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.type = 'WHILE'
+        self.type = 'PASS'
 
     def get_tree(self, level=0):
         return LEVEL_STR * level + self.type

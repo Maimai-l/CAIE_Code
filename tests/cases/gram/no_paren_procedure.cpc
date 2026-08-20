@@ -1,0 +1,4 @@
+PROCEDURE Hello
+    OUTPUT "hi"
+ENDPROCEDURE
+CALL Hello

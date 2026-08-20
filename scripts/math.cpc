@@ -1,16 +1,20 @@
 FUNCTION QPow(x : REAL, n : INTEGER) RETURNS REAL
     // 如果是0，返回1
-    IF n = 0 THEN RETURN 1 ENDIF
+    IF n = 0 THEN
+        RETURN 1
+    ENDIF
 
-    // 如果是1，返回本身
-    IF n = 1 THEN RETURN x ENDIF
+    // return x itself for power 1
+    IF n = 1 THEN
+        RETURN x
+    ENDIF
 
     // 如果是奇数
     IF n MOD 2 = 1 THEN
         RETURN POW(x, n-1) * x
     // 否则是偶数
     ELSE
-        DECLARE temp : INTEGER
+        DECLARE temp : REAL
         temp <- POW(x, n/2)
         RETURN temp * temp
     ENDIF

@@ -131,6 +131,32 @@ class Call_function(AST_Node):
         else:
             return None
 
+class CallStatement(AST_Node):
+    """CALL <target>: target may be a call, a method call, or a bare name
+    (SPEC 2.4 allows `CALL P` without parentheses)."""
+
+    def __init__(self, target, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.type = 'CALL'
+        self.target = target
+
+    def get_tree(self, level=0):
+        return LEVEL_STR * level + self.type + '\n' + self.target.get_tree(level+1)
+
+    def exe(self):
+        from .var import Get
+        from .types import Composite_type_expression
+        target = self.target
+        if isinstance(target, Get):
+            # Parenthesis-free procedure call (SPEC 2.4).
+            Call_function(target.id, lineno=self.lineno, lexpos=self.lexpos).exe()
+        elif isinstance(target, Composite_type_expression) or not isinstance(target, (Get,)) and hasattr(target, 'parameters'):
+            # A direct call (user function or built-in) or a method call.
+            target.exe()
+        else:
+            add_error_message('CALL expects a procedure name or call', self)
+
+
 class Declare_parameter(AST_Node):
     def __init__(self, id, type, by_ref=None, *args, **kwargs):
         super().__init__(*args, **kwargs)

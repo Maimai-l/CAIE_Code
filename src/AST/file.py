@@ -45,49 +45,26 @@ class Close_file(AST_Node):
             add_error_message(f'Expect `STRING` for a file path, but found `{file_path[1]}`', self)
 
 class Read_file(AST_Node):
-    def __init__(self, file_path, id, *args, **kwargs):
+    def __init__(self, file_path, target, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.type = 'READFILE'
         self.file_path = file_path
-        self.id = id
+        self.target = target
 
     def get_tree(self, level=0):
-        return LEVEL_STR * level + self.type + '\n' + self.file_path.get_tree(level+1) + '\n' + LEVEL_STR * (level+1) + str(self.id)
+        return LEVEL_STR * level + self.type + '\n' + self.file_path.get_tree(level+1) + '\n' + self.target.get_tree(level+1)
 
     def exe(self):
         file_path = self.file_path.exe()
-        if file_path[1] == 'STRING':
-            f = stack.get_file(file_path[0])
-            data = f.readline().strip()
-            stack.set_variable(self.id, data, 'STRING')
-        else:
-            add_error_message(f'Expect `STRING` for a file path, but found `{file_path[1]}`', self)
-
-class Read_file_array(AST_Node):
-    def __init__(self, file_path, id, indexes, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.type = 'READFILE_ARRAY'
-        self.file_path = file_path
-        self.id = id
-        self.indexes = indexes
-
-    def get_tree(self, level=0):
-        return LEVEL_STR * level + self.type + '\n' + self.file_path(level+1) + '\n' + LEVEL_STR * (level+1) + str(self.id) + '\n' + self.indexes.get_tree(level+1)
-
-    def exe(self):
-        fp = self.file_path.exe()
-        if fp[1] == 'STRING' :
-            f = stack.get_file(fp[0])
-            data = f.read()
-            Array_assign(
-                self.id,
-                self.indexes,
-                String(data, lineno=self.lineno, lexpos=self.lexpos),
-                lineno=self.lineno,
-                lexpos=self.lexpos
-            ).exe()
-        else:
-            add_error_message(f'Expect `STRING` for a file path, but found `{fp[1]}`', self)
+        if file_path[1] != 'STRING':
+            add_error_message(f'expect `STRING` for a file path, but found `{file_path[1]}`', self)
+        f = stack.get_file(file_path[0])
+        data = f.readline().strip()
+        target = self.target.exe()
+        try:
+            target.set_value(data)
+        except AttributeError:
+            add_error_message('READFILE target must be a variable', self)
 
 class Write_file(AST_Node):
     def __init__(self, file_path, value, *args, **kwargs):
@@ -132,24 +109,27 @@ class Seek(AST_Node):
 
 import pickle
 class Get_record(AST_Node):
-    def __init__(self, file_path, id, *args, **kwargs):
+    def __init__(self, file_path, target, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.type = 'GETRECORD'
         self.file_path = file_path
-        self.id = id
-    
+        self.target = target
+
     def get_tree(self, level=0):
-        return LEVEL_STR * level + self.type + '\n' + self.file_path.get_tree(level+1) + '\n' + LEVEL_STR * (level+1) + str(self.id)
-    
+        return LEVEL_STR * level + self.type + '\n' + self.file_path.get_tree(level+1) + '\n' + self.target.get_tree(level+1)
+
     def exe(self):
         fp = self.file_path.exe()
-        if fp[1] == 'STRING':
-            f = stack.get_file(fp[0])
-            f.seek(stack.get_seek(fp[0]))
-            t = pickle.load(f)
-            stack.set_variable(self.id.id, t[0], t[1])
-        else:
-            add_error_message(f'Expect `STRING` for a file path, but found `{fp[1]}`', self)
+        if fp[1] != 'STRING':
+            add_error_message(f'expect `STRING` for a file path, but found `{fp[1]}`', self)
+        f = stack.get_file(fp[0])
+        f.seek(stack.get_seek(fp[0]))
+        t = pickle.load(f)
+        target = self.target.exe()
+        try:
+            target.set_value(t[0])
+        except AttributeError:
+            add_error_message('GETRECORD target must be a variable', self)
 
 class Put_record(AST_Node):
     def __init__(self, file_path, record, *args, **kwargs):
