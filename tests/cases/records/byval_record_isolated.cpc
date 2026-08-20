@@ -1,0 +1,10 @@
+TYPE Point
+    DECLARE x : INTEGER
+ENDTYPE
+PROCEDURE Mut(BYVAL p : Point)
+    p.x <- 99
+ENDPROCEDURE
+DECLARE a : Point
+a.x <- 1
+CALL Mut(a)
+OUTPUT a.x

@@ -163,12 +163,16 @@ class ARRAY(base):
 
 def clone_wrapper(w):
     """Deep copy of a storage wrapper, for BYVAL parameters (SPEC 5.2).
-    Record/class instances are still passed by reference until record value
-    semantics land (plan step 10c)."""
+    Records copy (SPEC 6.1); class instances keep reference semantics
+    (SPEC 6.2)."""
     if isinstance(w, ARRAY):
         return ARRAY(_clone_array_dict(w.value), name=w.name)
-    if getattr(w, 'is_struct', False) or getattr(w, 'is_enum', False):
-        return w
+    if getattr(w, 'is_record', False):
+        return w.clone_record()
+    if getattr(w, 'is_struct', False):
+        return w  # class instances keep reference semantics (SPEC 6.2)
+    if getattr(w, 'is_enum', False):
+        return type(w)(w.value, name=w.name)
     return type(w)(w.value, name=w.name)
 
 

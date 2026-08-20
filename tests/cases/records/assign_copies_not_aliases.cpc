@@ -1,0 +1,9 @@
+TYPE Point
+    DECLARE x : INTEGER
+ENDTYPE
+DECLARE a, b : Point
+a.x <- 1
+b <- a
+b.x <- 99
+OUTPUT a.x
+OUTPUT b.x

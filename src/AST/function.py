@@ -85,10 +85,11 @@ class Call_function(AST_Node):
             return stack.structs[ptype](value)
         if ptype not in stack.structs:
             add_error_message(f'unknown parameter type `{ptype}`', self)
-        # User-defined type: pass the instance (records copy in plan step 10c).
+        # User-defined types: records copy BYVAL, class instances are shared.
         if isinstance(arg, tuple):
             add_error_message(f'parameter `{name}` expects a `{ptype}` value', self)
-        return arg
+        from ..data_types import clone_wrapper
+        return clone_wrapper(arg)
 
     def exe(self, pre_params=None):
         from .. import values

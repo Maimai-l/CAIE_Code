@@ -89,12 +89,29 @@ class Composite_type(AST_Node):
                 self.type = that.id
                 self.body = that.body
                 self.is_struct = True
+                self.is_record = True
                 self.space = Space(self.type, {}, {}, kind='object')
                 stack.push_subspace(self.space)
                 try:
                     self.body.exe()
                 finally:
                     stack.pop_subspace()
+
+            def clone_record(self):
+                from ..data_types import clone_wrapper
+                new = object.__new__(type(self))
+                base.__init__(new, name=self.name)
+                new.type = self.type
+                new.body = self.body
+                new.is_struct = True
+                new.is_record = True
+                new.space = Space(
+                    self.type,
+                    {key: (clone_wrapper(entry[0]), entry[1])
+                     for key, entry in self.space.variables.items()},
+                    self.space.functions,
+                    kind='object')
+                return new
 
             def __getitem__(self, i):
                 if i == 1:
@@ -118,11 +135,12 @@ class Composite_type(AST_Node):
                 return s
 
             def set_value(self, value):
-                # 将对方的 subspace 设置为自己的
-                if value.type == self.type:
-                    self.space = value.space
+                # SPEC 6.1: record assignment copies the whole record.
+                if getattr(value, 'type', None) == self.type:
+                    self.space = value.clone_record().space
                 else:
-                    add_stack_error_message(f'Cannot assign `{value.type}` to `{self.type}`')
+                    add_stack_error_message(
+                        f'cannot assign `{getattr(value, "type", type(value).__name__)}` to `{self.type}`')
 
         stack.add_struct(self.id, t)
 
